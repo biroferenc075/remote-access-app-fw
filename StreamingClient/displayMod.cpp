@@ -18,9 +18,7 @@ using namespace std;
 using namespace sc;
 
 
-DisplayModule::DisplayModule() {
-    std::cout << "test";
-}
+DisplayModule::DisplayModule() {}
 DisplayModule::~DisplayModule() {}
 
 
@@ -31,11 +29,10 @@ void DisplayModule::run() {
     BFE::BFEDevice bfeDevice{ bfeWindow };
     BFE::BFERenderer bfeRenderer{ bfeWindow, bfeDevice };
     BFE::BFEImage::Builder builder;
-    builder.loadTexture(fpath);
+    builder.loadImage(fpath);
     BFE::BFEImage img{ bfeDevice, builder };
 
     while (!bfeWindow.shouldClose()) {
-        std::cout << "hmm";
         glfwPollEvents();
         auto buffer = bfeRenderer.beginFrame();
         VkImageCopy imgCopy{};

@@ -88,14 +88,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs;C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;$(SolutionDir)BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core\x64\Debug;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>libcmt.lib;msvcrt.lib;libcmtd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;$(SolutionDir)x64\Debug;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;BFE-Core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -106,16 +108,18 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs;C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core\x64\Debug;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;$(SolutionDir)x64\Release;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;BFE-Core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -124,14 +128,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs;C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;$(SolutionDir)BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core\x64\Debug;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>libcmt.lib;msvcrt.lib;libcmtd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;$(SolutionDir)x64\Debug;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;BFE-Core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,16 +148,18 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs;C:\SDK;C:\SDK\glfw-3.3.8.bin.WIN64\include;C:\SDK\VulkanSDK\1.3.236.0\Include;C:\SDK\glm-0.9.9.8\glm;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;C:\Users\User\Desktop\Önlab\app-streaming-fw\BFE-Core\x64\Debug;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>C:\SDK\boost\boost_1_81_0\stage\lib;$(SolutionDir)x64\Release;C:\SDK\VulkanSDK\1.3.236.0\Lib;C:\SDK\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;BFE-Core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
