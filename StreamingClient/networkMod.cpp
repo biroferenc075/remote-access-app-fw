@@ -11,26 +11,50 @@ using boost::asio::ip::tcp;
 
 using namespace sc;
 
-tcp_client::tcp_client(tcp::socket& socket) : socket_(socket) {}
+const int imgsize = 600 * 800 * 4;
+
+tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm) : socket_(socket), dm(dm) {}
 void tcp_client::readThread() {
+
+    //boost::lock_guard<boost::mutex> lock(mut);
+    std::cout << "netw read\n";
+        boost::array<char, 1024> buf;
+
+        size_t len = 0;
+        size_t remainder = 0;
+
         while (!shouldStop)
         {
-            boost::array<char, 1024> buf;
-            boost::system::error_code error;
+            size_t offs = 0;
+            Frame* fr = new Frame(imgsize);
+            memcpy(fr->data, buf.data() + len - remainder, remainder);
+            
+            while (offs < imgsize) {
+                boost::system::error_code error;
 
-            size_t len = socket_.read_some(boost::asio::buffer(buf), error);
+                len = socket_.read_some(boost::asio::buffer(buf), error);
 
-            if (error == boost::asio::error::eof) {
-                shouldStop = true;
-                break; // Connection closed cleanly by peer.
+                if (error == boost::asio::error::eof) {
+                    shouldStop = true;
+                    break; // Connection closed cleanly by peer.
+                }
+                else if (error) {
+                    shouldStop = true;
+                    throw boost::system::system_error(error); // Some other error.
+                }
+
+                remainder = offs + len - imgsize;
+                if (remainder > 0) {
+                    memcpy(fr->data + offs, buf.data(), len-remainder);
+                }
+                else {
+                    memcpy(fr->data + offs, buf.data(), len);
+                }
+
+                offs += len;
             }
-            else if (error) {
-                shouldStop = true;
-                throw boost::system::system_error(error); // Some other error.
-            }
-                
-            std::cout.write(buf.data(), len);
-            std::cout << std::endl;
+
+            dm.submitToQueue(fr);
         }
     }
 

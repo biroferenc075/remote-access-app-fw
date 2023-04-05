@@ -10,7 +10,7 @@
 
 using boost::asio::ip::tcp;
 using namespace sc;
-
+//TODO move into sc
 void run(string const& host, boost::asio::io_context& io_context) {
     tcp::resolver resolver(io_context);
     tcp::resolver::results_type endpoints =
@@ -18,9 +18,8 @@ void run(string const& host, boost::asio::io_context& io_context) {
 
     tcp::socket socket(io_context);
     boost::asio::connect(socket, endpoints);
-    tcp_client client(socket);
 
-    StreamingClient streaming_client_(io_context, client);
+    StreamingClient streaming_client_(io_context, move(socket));
 
     streaming_client_.start();
 }

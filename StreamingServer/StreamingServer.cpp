@@ -9,6 +9,9 @@
 #include <boost/thread.hpp>
 #include <boost/array.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 using boost::asio::ip::tcp;
 
 bool shouldStop = false;
@@ -36,9 +39,22 @@ public:
         return socket_;
     }
 
+
+    const std::string& fpath1 = "image.png";
+
+    const std::string& fpath2 = "image2.png";
     void start(boost::asio::io_context& io_context)
     {
         message_ = make_daytime_string();
+
+        pixels1 = stbi_load(fpath1.c_str(), &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
+        pixels2 = stbi_load(fpath2.c_str(), &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
+
+        imageSize = imgWidth * imgHeight * 4;
+
+        //if (!pixels) {
+        //    throw std::runtime_error("failed to load image!");
+        //}
 
         boost::thread t(boost::bind(&tcp_connection::readThread, this));
         writeThread(io_context);
@@ -67,16 +83,20 @@ public:
 
     void writeThread(boost::asio::io_context& io_context) {
         boost::asio::steady_timer t(io_context, boost::asio::chrono::seconds(1));
-
+        bool tick = true;
         while (!shouldStop) {
             t.wait();
             t.expires_from_now(boost::asio::chrono::seconds(1));
-            sendMsg();
+            if (tick)
+                sendMsg(pixels1);
+            else
+                sendMsg(pixels2);
+            tick = !tick;
         }
     }
 
-    void sendMsg() {
-        boost::asio::async_write(socket_, boost::asio::buffer(message_),
+    void sendMsg(void* src) {
+        boost::asio::async_write(socket_, boost::asio::buffer(src, imageSize),
             boost::bind(&tcp_connection::handle_write, shared_from_this(),
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred));
@@ -96,6 +116,8 @@ private:
 
     tcp::socket socket_;
     std::string message_;
+    unsigned char* pixels1, *pixels2;
+    int imgWidth, imgHeight, imgChannels, imageSize;
 };
 
 class tcp_server

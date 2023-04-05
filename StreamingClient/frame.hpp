@@ -3,18 +3,12 @@
 
 namespace sc {
     struct Frame {
-        uint32_t id;
-        char* data;
         size_t size;
+        unsigned char* data;
 
         Frame(size_t size) {
-            static uint32_t gid = 0;
-            id = gid++;
-            data = (char*)malloc(size); //TODO allocator
+            data = (unsigned char*)malloc(size);
             this->size = size;
-        }
-        ~Frame() {
-            free(data);
         }
     };
 }

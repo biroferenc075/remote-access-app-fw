@@ -171,14 +171,20 @@ namespace BFE {
     }
    
 
-    std::unique_ptr<BFEImage> BFEImage::createTextureFromFile(BFEDevice& device, const std::string& fpath) {
+    std::unique_ptr<BFEImage> BFEImage::createImageFromFile(BFEDevice& device, const std::string& fpath) {
         Builder builder;
         builder.loadImage(fpath);
-
-
         return std::make_unique<BFEImage>(device, builder);
     }
-
+    std::unique_ptr<BFEImage> BFEImage::createImageFromBuffer(BFEDevice& device, unsigned char* buffer, int width, int height, int channels) {
+        Builder builder;
+        builder.pixels = buffer;
+        builder.imgWidth = width;
+        builder.imgHeight = height;
+        builder.imgChannels = channels;
+        builder.imageSize = width * height * 4;
+        return std::make_unique<BFEImage>(device, builder);
+    }
 
 
     void BFEImage::Builder::loadImage(const std::string& fpath) {
@@ -188,5 +194,10 @@ namespace BFE {
         if (!pixels) {
             throw std::runtime_error("failed to load image!");
         }
+    }
+
+    void BFEImage::Builder::loadImage(const size_t size, unsigned char* data) {
+        pixels = data;
+        imageSize = size;
     }
 }
