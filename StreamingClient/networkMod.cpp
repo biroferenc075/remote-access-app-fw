@@ -11,15 +11,24 @@ using boost::asio::ip::tcp;
 
 using namespace sc;
 
-const int imgsize = 600 * 800 * 4;
+const size_t imgsize = 600 * 800 * 4;
 
-tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm) : socket_(socket), dm(dm) {}
-void tcp_client::readThread() {
+tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) : socket_(socket), dm(dm), everyoneReady(readyFlag), readyCond(readyCond), mut(mut) {}
+    void tcp_client::readThread() {
+        std::cout << "netw read init\n";
+        isReady = true;
 
-    //boost::lock_guard<boost::mutex> lock(mut);
-    std::cout << "netw read\n";
-        boost::array<char, 1024> buf;
-
+        boost::unique_lock<boost::mutex> lock(mut);
+        while (!everyoneReady)
+        {
+            std::cout << everyoneReady;
+            readyCond.wait(lock);
+        }
+        lock.unlock();
+        std::cout << "netw read start\n";
+    
+        boost::array<unsigned char, 1024> buf;
+        //std::cout << "buf data " << reinterpret_cast<void*>(buf.data()) << endl;
         size_t len = 0;
         size_t remainder = 0;
 
@@ -27,35 +36,67 @@ void tcp_client::readThread() {
         {
             size_t offs = 0;
             Frame* fr = new Frame(imgsize);
+            //std::cout << "netw memcpy\n";
             memcpy(fr->data, buf.data() + len - remainder, remainder);
-            
+        
             while (offs < imgsize) {
                 boost::system::error_code error;
 
+               // std::cout << "netw read_some\n";
                 len = socket_.read_some(boost::asio::buffer(buf), error);
-
+            
                 if (error == boost::asio::error::eof) {
-                    shouldStop = true;
+                    std::cout << "found eof";
+                    //shouldStop = true;
+
                     break; // Connection closed cleanly by peer.
                 }
                 else if (error) {
+                    std::cout << "network error: " << error.message() << "\n";
                     shouldStop = true;
-                    throw boost::system::system_error(error); // Some other error.
+                    //Sleep(60000);
+                    return;
+                    //throw boost::system::system_error(error); // Some other error.
                 }
 
-                remainder = offs + len - imgsize;
+                long long res = offs + len - static_cast<signed long long>(imgsize);
+                //std::cout << "res: " << res << "\n";
+                if (res > 0) {
+                    remainder = res;
+                }
+                else {
+                    remainder = 0;
+                }
+                //remainder = offs + len - imgsize;
+                //std::cout << "netw offs: " << offs << " len: " << len <<" remainder: " << remainder << "\n";
                 if (remainder > 0) {
+                    //std::cout << "memcpy rem>0\n";
                     memcpy(fr->data + offs, buf.data(), len-remainder);
                 }
                 else {
+                    //unsigned char* p1 = static_cast<unsigned char*>(buf.data());
+                    //std::cout << "memcpy rem " << p1[0] << p1[1] << p1[2] << "xd" << endl;
                     memcpy(fr->data + offs, buf.data(), len);
                 }
 
-                offs += len;
-            }
+           
 
+                offs += len;
+                //std::cout << "netw offs: " << offs << " len: " << len << "\n";
+            }
+            //std::cout << "netw submittoqueue\n";
             dm.submitToQueue(fr);
+            std::cout << "submitted frame to decompress\n";
+            //Sleep(5000);
+            std::cout << "frame size: " << fr->size << " data: \n";
+            //std::cout << std::hex << std::setfill('0');  // needs to be set only once
+            //auto* ptr = reinterpret_cast<unsigned char*>(fr->data);
+            //for (int i = 0; i < (int)fr->size; i++, ptr++) {
+            //    std::cout << std::setw(2) << static_cast<unsigned>(*ptr);
+            //}
+        
         }
+        std::cout << "netw ended\n";
     }
 
     void tcp_client::writeThread() {

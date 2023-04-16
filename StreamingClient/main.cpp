@@ -17,8 +17,9 @@ void run(string const& host, boost::asio::io_context& io_context) {
         resolver.resolve(host, "daytime");
 
     tcp::socket socket(io_context);
+    
     boost::asio::connect(socket, endpoints);
-
+    
     StreamingClient streaming_client_(io_context, move(socket));
 
     streaming_client_.start();

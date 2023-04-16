@@ -16,7 +16,7 @@ namespace sc {
 
     class StreamingClient {
     public:
-        StreamingClient(boost::asio::io_context& io_context, tcp::socket socket);
+        StreamingClient(boost::asio::io_context& io_context, tcp::socket&& socket);
         void start();
         
     private:
@@ -28,10 +28,7 @@ namespace sc {
         boost::mutex mut;
 
         boost::condition_variable readyCond;
-        bool writeThreadReady = false;
-        bool readThreadReady = false;
-        bool dispThreadReady = false;
-        bool decompThreadReady = false;
+        bool everyoneReady = false;
 
         bool shouldClose = false; // TODO shut down all threads
         //TODO all threads should wait until everyone is ready

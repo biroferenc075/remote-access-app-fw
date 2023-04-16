@@ -49,12 +49,22 @@ public:
 
         pixels1 = stbi_load(fpath1.c_str(), &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
         pixels2 = stbi_load(fpath2.c_str(), &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
-
         imageSize = imgWidth * imgHeight * 4;
+        
+       
 
-        //if (!pixels) {
-        //    throw std::runtime_error("failed to load image!");
+        //std::cout << std::hex << std::setfill('0');  // needs to be set only once
+        //auto* ptr = reinterpret_cast<unsigned char*>(pixels2);
+        //for (int i = 0; i < imageSize; i++, ptr++) {
+            //std::cout << std::setw(2) << static_cast<unsigned>(*ptr);
         //}
+
+        
+
+        std::cout << imageSize << "imagesize \n";
+        if (!pixels1 || !pixels2) {
+            throw std::runtime_error("failed to load image!");
+        }
 
         boost::thread t(boost::bind(&tcp_connection::readThread, this));
         writeThread(io_context);
@@ -82,17 +92,24 @@ public:
     }
 
     void writeThread(boost::asio::io_context& io_context) {
-        boost::asio::steady_timer t(io_context, boost::asio::chrono::seconds(1));
-        bool tick = true;
-        while (!shouldStop) {
-            t.wait();
-            t.expires_from_now(boost::asio::chrono::seconds(1));
+        boost::asio::steady_timer t(io_context, boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
+        bool tick = false;
+        std::cout << "write\n";
+        //while (!shouldStop)
+            //t.wait();
+        {
+            
             if (tick)
                 sendMsg(pixels1);
             else
                 sendMsg(pixels2);
             tick = !tick;
+            std::cout << "tick\n";
+            t.expires_from_now(boost::asio::chrono::milliseconds(250));
+            t.wait();
         }
+
+        Sleep(2000);
     }
 
     void sendMsg(void* src) {
@@ -109,9 +126,13 @@ private:
     {
     }
 
-    void handle_write(const boost::system::error_code& /*error*/,
-        size_t /*bytes_transferred*/)
+    void handle_write(const boost::system::error_code& error,
+        size_t bytes)
     {
+        std::cout << "message sent, bytes transferred: " << bytes <<"\n";
+        if (error) {
+            std::cout << error.message();
+        }
     }
 
     tcp::socket socket_;

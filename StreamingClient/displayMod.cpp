@@ -23,20 +23,21 @@
 using namespace sc;
 
 DisplayModule::DisplayModule(boost::asio::io_context& io_context, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) 
-    : io_context_{ io_context}, timer(boost::asio::steady_timer(io_context)) , readyFlag(readyFlag), readyCond(readyCond), mut(mut) {
+    : io_context_{ io_context}, timer(boost::asio::steady_timer(io_context)) , everyoneReady(readyFlag), readyCond(readyCond), mut(mut) {
     std::cout << "displ ctor\n";
-    timer.expires_after(dur);
+   // timer.expires_after(dur);
 }
 DisplayModule::~DisplayModule() {}
 
 const std::string& fpath = "image.png";
 
 void DisplayModule::handler(const boost::system::error_code& error, BFERenderer* bfeRenderer) {
+    //std::cout << "displ handl\n";
     if (!error)
     {
-        std::cout << "displ handl\n";
         BFEImage* img;
         if (imageQueue.pop(img)) {
+            std::cout << "displ pop \n";
             auto buffer = bfeRenderer->beginFrame();
             VkImageCopy imgCopy{};
 
@@ -65,31 +66,62 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
 
             //TODO free image? sync with display?
         }
+        else {
+            //std::cout << "empty";
+        }
+        if(!ioerror)
+            timer.expires_after(dur);
     }
-    timer.expires_after(dur);
+    else {
+        static bool written = false;
+        if(!written)std::cout << "display error: " << error.message() << std::endl;
+        written = true;
+        ioerror = true;
+    }
 }
 
 
 void DisplayModule::run() {
-    std::cout << "displ run\n";
-    auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, &bfeRenderer);
-    
-    boost::lock_guard<boost::mutex> lock(mut);
 
-    std::cout << "displ continue run\n";
-    readyFlag = true;
+    std::cout << "displ init\n";
+    auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, &bfeRenderer);
+    isReady = true;
+
+    boost::unique_lock<boost::mutex> lock(mut);
+    while (!everyoneReady)
+    {
+        readyCond.wait(lock);
+    }
+
+    lock.unlock();
+
+    std::cout << "displ start\n";
+    timer.expires_after(dur);
+    
     timer.async_wait(handlerfunc);
-    //readyCond.notify_all();
+    auto err = boost::system::error_code();
 
     while (!bfeWindow.shouldClose()) {
         glfwPollEvents();
-        timer.async_wait(handlerfunc);
-    }
+        if (!ioerror) {
+            //timer.wait();
+            //handler(err, &bfeRenderer);
 
+            timer.async_wait(handlerfunc);
+            //std::cout << "waiting";
+        }
+
+        if (ioerror) {
+            timer.cancel();
+        }
+           
+    }
+    timer.cancel();
+    std::cout << "displ ended\n";
     vkDeviceWaitIdle(bfeDevice.device());
 }
 
 void DisplayModule::submitToQueue(BFEImage* img) {
     imageQueue.push(img); // TODO look into changing to bounded_push
-    std::cout << "displ queuesubm\n";
+    std::cout << "displ submit\n";
 }

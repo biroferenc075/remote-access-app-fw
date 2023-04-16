@@ -14,7 +14,7 @@ namespace BFE {
             VkDeviceSize imageSize;
             int imgWidth, imgHeight, imgChannels;
             void loadImage(const std::string& fpath);
-            void loadImage(const size_t size, unsigned char* data);
+            void loadImage(const size_t size, unsigned char* data, const size_t width = 800, const size_t height = 600, const size_t channels = 4);
         };
 
         void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);

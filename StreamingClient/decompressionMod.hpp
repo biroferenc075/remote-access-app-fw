@@ -18,13 +18,19 @@ namespace sc {
 		void submitToQueue(Frame* frame);
 		void run();
 		DecompressionModule(bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, DisplayModule& dm);
+
+		bool ready() {
+			return isReady;
+		}
 	private:
 		DisplayModule& dm;
 		queue<Frame*> frameQueue;
 		
-		bool& readyFlag;
+		bool& everyoneReady;
+		bool isReady = false;
 		boost::condition_variable& readyCond;
 		boost::mutex& mut;
+		queue<BFEImage* > imageQueue;
 
 		boost::interprocess::interprocess_semaphore sem;
 	};

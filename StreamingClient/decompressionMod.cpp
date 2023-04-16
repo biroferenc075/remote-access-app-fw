@@ -9,20 +9,33 @@ void sc::DecompressionModule::submitToQueue(Frame* frame)
 
 void sc::DecompressionModule::run()
 {
-	boost::lock_guard<boost::mutex> lock(mut);
-	std::cout << "decomp run\n";
+	std::cout << "decomp init\n";
+	isReady = true;
+
+	boost::unique_lock<boost::mutex> lock(mut);
+	while (!everyoneReady)
+	{
+		readyCond.wait(lock);
+	}
+	lock.unlock();
+	std::cout << "decomp start\n";
 	while (true) {
+		std::cout << "decomp waiting\n";
 		sem.wait();
+		std::cout << "decomp working\n";
 		Frame* fr;
 		while (frameQueue.pop(fr)) {
-			BFEImage::Builder builder;
-			builder.loadImage(fr->size, fr->data);
-			BFEImage* img = new BFEImage(dm.bfeDevice, builder); 
+			BFEImage::Builder* builder = new BFEImage::Builder();
+			builder->loadImage(fr->size, fr->data);
+			BFEImage* img = new BFEImage(dm.bfeDevice, *builder); 
 			dm.submitToQueue(img);
-			delete fr;
+			//delete fr;
+
+			std::cout << "submitted frame to display, size: " << (int)fr->size << " data: " << reinterpret_cast<void*>(fr->data) << endl;
 		}
 	}
+	std::cout << "decomp ended\n";
 }
 
-sc::DecompressionModule::DecompressionModule(bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, DisplayModule& dm) : readyFlag(readyFlag), readyCond(readyCond), mut(mut), dm(dm), sem(0) {} 
+sc::DecompressionModule::DecompressionModule(bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, DisplayModule& dm) : everyoneReady(readyFlag), readyCond(readyCond), mut(mut), dm(dm), sem(0) {}
 //TODO change semaphore value to queue size

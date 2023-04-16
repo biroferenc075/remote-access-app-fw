@@ -12,7 +12,6 @@ namespace BFE {
         imageBuffer = std::make_unique<BFEBuffer>(bfeDevice, builder.imageSize, 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         bfeDevice.copyBuffer(stagingBuffer.getBuffer(), imageBuffer.get()->getBuffer(), builder.imageSize);
 
-        stbi_image_free(builder.pixels);
         createImage(builder.imgWidth, builder.imgHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
         transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         copyBufferToImage(stagingBuffer.getBuffer(), image, static_cast<uint32_t>(builder.imgWidth), static_cast<uint32_t>(builder.imgHeight));
@@ -21,6 +20,8 @@ namespace BFE {
         imgWidth = builder.imgWidth;
         imgHeight = builder.imgHeight;
         imgChannels = builder.imgChannels;
+
+        stbi_image_free(builder.pixels);
     }
     BFEImage::~BFEImage() {
         vkDestroyImage(bfeDevice.device(), image, nullptr);
@@ -196,8 +197,11 @@ namespace BFE {
         }
     }
 
-    void BFEImage::Builder::loadImage(const size_t size, unsigned char* data) {
+    void BFEImage::Builder::loadImage(const size_t size, unsigned char* data, const size_t width, const size_t height, const size_t channels) {
         pixels = data;
         imageSize = size;
+        imgWidth = width;
+        imgHeight = height;
+        imgChannels = channels;
     }
 }
