@@ -11,7 +11,7 @@ using boost::asio::ip::tcp;
 
 using namespace sc;
 
-const size_t imgsize = 600 * 800 * 4;
+const size_t imgsize = DisplayModule::WIDTH * DisplayModule::HEIGHT * 4;
 
 tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) : socket_(socket), dm(dm), everyoneReady(readyFlag), readyCond(readyCond), mut(mut) {}
     void tcp_client::readThread() {
@@ -54,7 +54,7 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
                 else if (error) {
                     std::cout << "network error: " << error.message() << "\n";
                     shouldStop = true;
-                    //Sleep(60000);
+                    
                     return;
                     //throw boost::system::system_error(error); // Some other error.
                 }

@@ -18,6 +18,7 @@ namespace sc {
     public:
         StreamingClient(boost::asio::io_context& io_context, tcp::socket&& socket);
         void start();
+        void waitUntilReady();
         
     private:
         boost::asio::io_context& io_context_;

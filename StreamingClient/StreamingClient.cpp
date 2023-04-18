@@ -25,16 +25,29 @@ void StreamingClient::start() {
 
     boost::thread t4(boost::bind(&DecompressionModule::run, &decompressionModule_));
 
-    boost::thread t3(boost::bind(&DisplayModule::run, &displayModule_));
+    //boost::thread t3(boost::bind(&DisplayModule::run, &displayModule_));
 
-
+    
     //boost::thread t2(boost::bind(&tcp_client::writeThread, &network_client_));
 
     t1.detach();
     //t2.detach();
 
-    t3.detach();
+    //t3.detach();
     t4.detach();
+    boost::thread r(boost::bind(&StreamingClient::waitUntilReady, this));
+    
+    std::cout << "io context run \n";
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> guard = boost::asio::make_work_guard(io_context_);
+
+    //io_context.run();
+    boost::thread io(boost::bind(&boost::asio::io_context::run, &io_context_));
+    io.detach();
+
+    displayModule_.run();
+}
+
+void StreamingClient::waitUntilReady() {
     boost::unique_lock<boost::mutex> lock(mut);
 
     while (!(network_client_.ready() && decompressionModule_.ready() && displayModule_.ready()))
@@ -46,13 +59,6 @@ void StreamingClient::start() {
     everyoneReady = true;
     std::cout << "wait ready\n";
     readyCond.notify_all();
-    std::cout << "io run\n";
-
-
     Sleep(1000);
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> guard = boost::asio::make_work_guard(io_context_);
-    io_context_.run();
 
-    std::cout << "exiting\n";
 }
-

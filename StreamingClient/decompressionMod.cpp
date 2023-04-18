@@ -26,8 +26,8 @@ void sc::DecompressionModule::run()
 		Frame* fr;
 		while (frameQueue.pop(fr)) {
 			BFEImage::Builder* builder = new BFEImage::Builder();
-			builder->loadImage(fr->size, fr->data);
-			BFEImage* img = new BFEImage(dm.bfeDevice, *builder); 
+			builder->loadImage(fr->size, fr->data, dm.WIDTH, dm.HEIGHT, 4);
+			BFEImage* img = new BFEImage(dm.bfeDevice, *builder);//, VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 			dm.submitToQueue(img);
 			//delete fr;
 

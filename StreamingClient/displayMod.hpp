@@ -18,8 +18,8 @@ using namespace BFE;
 namespace sc {
 	class DisplayModule {
 	public:
-		static constexpr int WIDTH = 800;
-		static constexpr int HEIGHT = 600;
+		static constexpr int WIDTH = 600;
+		static constexpr int HEIGHT = 400;
 		static constexpr int FRAMERATE = 30;
 
 		DisplayModule(boost::asio::io_context& io_context, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut);
@@ -43,7 +43,7 @@ namespace sc {
 		bool isReady = false;
 		boost::condition_variable& readyCond;
 		boost::mutex& mut;
-		queue<BFEImage* > imageQueue;
+		queue<BFEImage*> imageQueue{ size_t(16) };
 
 		bool ioerror = false;
 	};

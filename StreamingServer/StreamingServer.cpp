@@ -40,34 +40,33 @@ public:
     }
 
 
-    const std::string& fpath1 = "image.png";
-
-    const std::string& fpath2 = "image2.png";
+    //const std::string fpath = "f0.png";
+    static const int frameNum = 57;
+    unsigned char* pixels[frameNum];
+    int imgWidth, imgHeight, imgChannels, imageSize;
     void start(boost::asio::io_context& io_context)
     {
-        message_ = make_daytime_string();
+        try {
+            message_ = make_daytime_string();
+            for (int i = 0; i < frameNum; i++) {
+                char buf[30];
+                sprintf(buf, "frame_%02d_delay-0.1s.png", i);
+                pixels[i] = stbi_load(buf, &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
+                if (!pixels[i]) {
+                    throw std::runtime_error("failed to load image!");
+                }
+            }
+            imageSize = imgWidth * imgHeight * 4;
+            std::cout << imageSize << " imagesize \n";
 
-        pixels1 = stbi_load(fpath1.c_str(), &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
-        pixels2 = stbi_load(fpath2.c_str(), &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
-        imageSize = imgWidth * imgHeight * 4;
-        
-       
-
-        //std::cout << std::hex << std::setfill('0');  // needs to be set only once
-        //auto* ptr = reinterpret_cast<unsigned char*>(pixels2);
-        //for (int i = 0; i < imageSize; i++, ptr++) {
-            //std::cout << std::setw(2) << static_cast<unsigned>(*ptr);
-        //}
-
-        
-
-        std::cout << imageSize << "imagesize \n";
-        if (!pixels1 || !pixels2) {
-            throw std::runtime_error("failed to load image!");
+            boost::thread t(boost::bind(&tcp_connection::readThread, this));
+            t.detach();
+            writeThread(io_context);
         }
-
-        boost::thread t(boost::bind(&tcp_connection::readThread, this));
-        writeThread(io_context);
+        catch (std::exception e) {
+            std::cout << e.what();
+        }
+       
     }
 
     void readThread() {
@@ -92,32 +91,23 @@ public:
     }
 
     void writeThread(boost::asio::io_context& io_context) {
-        boost::asio::steady_timer t(io_context, boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
-        bool tick = false;
+        boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / 30));//boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
+       
         std::cout << "write\n";
-        //while (!shouldStop)
-            //t.wait();
+        int i = 0;
+        while (!shouldStop)
         {
+            sendMsg(pixels[i++%frameNum]);
             
-            if (tick)
-                sendMsg(pixels1);
-            else
-                sendMsg(pixels2);
-            tick = !tick;
-            std::cout << "tick\n";
-            t.expires_from_now(boost::asio::chrono::milliseconds(250));
+            std::cout << i << " tick\n";
+            t.expires_from_now(boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
             t.wait();
         }
-
-        Sleep(2000);
     }
 
     void sendMsg(void* src) {
-        boost::asio::async_write(socket_, boost::asio::buffer(src, imageSize),
-            boost::bind(&tcp_connection::handle_write, shared_from_this(),
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred));
-
+        socket_.send(boost::asio::buffer(src, imageSize));
+        //boost::asio::async_write(socket_, boost::asio::buffer(src, imageSize), boost::bind(&tcp_connection::handle_write, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
     }
 
 private:
@@ -137,8 +127,7 @@ private:
 
     tcp::socket socket_;
     std::string message_;
-    unsigned char* pixels1, *pixels2;
-    int imgWidth, imgHeight, imgChannels, imageSize;
+    
 };
 
 class tcp_server

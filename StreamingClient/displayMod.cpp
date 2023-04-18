@@ -38,6 +38,7 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
         BFEImage* img;
         if (imageQueue.pop(img)) {
             std::cout << "displ pop \n";
+            
             auto buffer = bfeRenderer->beginFrame();
             VkImageCopy imgCopy{};
 
@@ -59,18 +60,24 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
             imgCopy.srcOffset = VkOffset3D{ 0,0,0 };
             imgCopy.dstOffset = VkOffset3D{ 0,0,0 };
             imgCopy.extent = VkExtent3D{ img->imgWidth, img->imgHeight, 1 };
+            
+           // BFEImage::transitionVKImageLayout(bfeDevice, bfeRenderer->getCurrentImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL); //VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 
-
-            vkCmdCopyImage(buffer, img->image, img->layout, bfeRenderer->getCurrentImage(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 1, &imgCopy);
+            vkCmdCopyImage(buffer, img->image, img->layout, bfeRenderer->getCurrentImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imgCopy);
+            
+           // BFEImage::transitionVKImageLayout(bfeDevice, bfeRenderer->getCurrentImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+            
             bfeRenderer->endFrame();
-
-            //TODO free image? sync with display?
         }
         else {
             //std::cout << "empty";
         }
-        if(!ioerror)
+        if (!ioerror) {
             timer.expires_after(dur);
+            auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, bfeRenderer);
+            timer.async_wait(handlerfunc);
+        }
+            
     }
     else {
         static bool written = false;
@@ -107,12 +114,13 @@ void DisplayModule::run() {
             //timer.wait();
             //handler(err, &bfeRenderer);
 
-            timer.async_wait(handlerfunc);
+            //timer.async_wait(handlerfunc);
             //std::cout << "waiting";
         }
-
-        if (ioerror) {
+        else {
+            std::cout << "ioerror\n";
             timer.cancel();
+            break;
         }
            
     }

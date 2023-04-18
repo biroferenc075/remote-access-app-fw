@@ -23,6 +23,10 @@ void run(string const& host, boost::asio::io_context& io_context) {
     StreamingClient streaming_client_(io_context, move(socket));
 
     streaming_client_.start();
+
+
+    
+    std::cout << "exiting";
 }
 
 int main(int argc, char* argv[])

@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDK\boost\boost_1_81_0;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDK\boost\boost_1_81_0;$(SolutionDir)libs</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,7 +120,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDK\boost\boost_1_81_0;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDK\boost\boost_1_81_0;$(SolutionDir)libs</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

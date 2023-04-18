@@ -24,13 +24,12 @@ namespace sc {
 		}
 	private:
 		DisplayModule& dm;
-		queue<Frame*> frameQueue;
+		queue<Frame*> frameQueue{size_t(16)};
 		
 		bool& everyoneReady;
 		bool isReady = false;
 		boost::condition_variable& readyCond;
 		boost::mutex& mut;
-		queue<BFEImage* > imageQueue;
 
 		boost::interprocess::interprocess_semaphore sem;
 	};

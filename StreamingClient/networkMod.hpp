@@ -33,7 +33,7 @@ namespace sc {
         bool isReady = false;
         boost::condition_variable& readyCond;
         boost::mutex& mut;
-        queue<BFEImage* > imageQueue;
+        //queue<BFEImage* > imageQueue;
     };
 }
 
