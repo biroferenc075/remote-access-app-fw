@@ -2,6 +2,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include "consts.hpp"
 #include <boost/bind/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -53,6 +54,7 @@ public:
                 sprintf(buf, "frame_%02d_delay-0.1s.png", i);
                 pixels[i] = stbi_load(buf, &imgWidth, &imgHeight, &imgChannels, STBI_rgb_alpha);
                 if (!pixels[i]) {
+                    std::cout << buf;
                     throw std::runtime_error("failed to load image!");
                 }
             }
@@ -70,28 +72,35 @@ public:
     }
 
     void readThread() {
-        while (!shouldStop)
-        {
-            boost::array<char, 128> buf;
-            boost::system::error_code error;
+        try {
+            while (!shouldStop)
+            {
+                boost::array<char, 128> buf;
+                boost::system::error_code error;
 
-            size_t len = socket_.read_some(boost::asio::buffer(buf), error);
+                size_t len = socket_.read_some(boost::asio::buffer(buf), error);
 
-            if (error == boost::asio::error::eof) {
-                shouldStop = true;
-                break; // Connection closed cleanly by peer.
+                if (error == boost::asio::error::eof) {
+                    shouldStop = true;
+                    break; // Connection closed cleanly by peer.
+                }
+                else if (error) {
+                    shouldStop = true;
+                    throw boost::system::system_error(error); // Some other error.
+                }
+
+                message_.assign(buf.data(), len);
             }
-            else if (error) {
-                shouldStop = true;
-                throw boost::system::system_error(error); // Some other error.
-            }
-
-            message_.assign(buf.data(), len);
         }
+        catch (std::exception e)
+        {
+            std::cout << e.what();
+        }
+        
     }
 
     void writeThread(boost::asio::io_context& io_context) {
-        boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / 30));//boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
+        boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));//boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
        
         std::cout << "write\n";
         int i = 0;
@@ -100,13 +109,13 @@ public:
             sendMsg(pixels[i++%frameNum]);
             
             std::cout << i << " tick\n";
-            t.expires_from_now(boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
+            t.expires_from_now(boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));
             t.wait();
         }
     }
 
     void sendMsg(void* src) {
-        socket_.send(boost::asio::buffer(src, imageSize));
+        int sent = socket_.send(boost::asio::buffer(src, imageSize));
         //boost::asio::async_write(socket_, boost::asio::buffer(src, imageSize), boost::bind(&tcp_connection::handle_write, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
     }
 

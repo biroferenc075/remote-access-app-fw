@@ -9,7 +9,7 @@
 namespace BFE {
 		class BFERenderer {
 	public:
-		BFERenderer(BFEWindow& window, BFEDevice& device);
+		BFERenderer(size_t pid, BFEWindow& window, BFEDevice& device);
 		~BFERenderer();
 
 		VkCommandBuffer beginFrame();
@@ -26,6 +26,9 @@ namespace BFE {
 		int getFrameIndex() const {
 			return currentFrameIndex;
 		}
+		uint32_t swapChainWidth() { return bfeSwapChain->width(); }
+		uint32_t swapChainHeight() { return bfeSwapChain->height(); }
+		size_t pid;
 	private:
 		void createCommandBuffers();
 		void freeCommandBuffers();

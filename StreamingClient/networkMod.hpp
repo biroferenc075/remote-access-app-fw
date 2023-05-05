@@ -1,7 +1,7 @@
 #pragma once
 
 #include "decompressionMod.hpp"
-
+#include "consts.hpp"
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/lockfree/queue.hpp>

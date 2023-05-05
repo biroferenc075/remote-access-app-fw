@@ -11,10 +11,11 @@ using boost::asio::ip::tcp;
 
 using namespace sc;
 
-const size_t imgsize = DisplayModule::WIDTH * DisplayModule::HEIGHT * 4;
+const size_t imgsize = WIDTH * HEIGHT * 4;
 
 tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) : socket_(socket), dm(dm), everyoneReady(readyFlag), readyCond(readyCond), mut(mut) {}
     void tcp_client::readThread() {
+        try {
         std::cout << "netw read init\n";
         isReady = true;
 
@@ -49,7 +50,7 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
                     std::cout << "found eof";
                     //shouldStop = true;
 
-                    break; // Connection closed cleanly by peer.
+                    return; // Connection closed cleanly by peer.
                 }
                 else if (error) {
                     std::cout << "network error: " << error.message() << "\n";
@@ -97,6 +98,10 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
         
         }
         std::cout << "netw ended\n";
+        }
+        catch (std::exception e) {
+            std::cout << e.what();
+        }
     }
 
     void tcp_client::writeThread() {

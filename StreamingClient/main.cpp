@@ -20,7 +20,12 @@ void run(string const& host, boost::asio::io_context& io_context) {
     
     boost::asio::connect(socket, endpoints);
     
-    StreamingClient streaming_client_(io_context, move(socket));
+    std::cout << "running";
+
+    BFEWindow win{WIDTH, HEIGHT, "Vulkan" };
+    BFEDevice dev{ win };
+
+    StreamingClient streaming_client_(io_context, move(socket), win, dev);
 
     streaming_client_.start();
 

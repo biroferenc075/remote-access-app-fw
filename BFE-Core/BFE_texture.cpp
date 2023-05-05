@@ -7,7 +7,7 @@
 #include <stb_image.h>
 //TODO separate sampler and image
 namespace BFE {
-    BFETexture::BFETexture(BFEDevice& device, Builder& builder) : bfeDevice{ device } {
+    BFETexture::BFETexture(size_t pid, BFEDevice& device, Builder& builder) : bfeDevice{ device }, pid(pid) {
        
         createTextureImage(device, builder);
         createTextureImageView();
@@ -59,7 +59,7 @@ namespace BFE {
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = bfeDevice.getCommandPool();
+        allocInfo.commandPool = bfeDevice.getCommandPool(pid);
         allocInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
@@ -82,10 +82,10 @@ namespace BFE {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
 
-        vkQueueSubmit(bfeDevice.graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(bfeDevice.graphicsQueue());
+        vkQueueSubmit(bfeDevice.transferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(bfeDevice.transferQueue());
 
-        vkFreeCommandBuffers(bfeDevice.device(), bfeDevice.getCommandPool(), 1, &commandBuffer);
+        vkFreeCommandBuffers(bfeDevice.device(), bfeDevice.getCommandPool(pid), 1, &commandBuffer);
     }
 
     void BFETexture::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
@@ -171,7 +171,7 @@ namespace BFE {
         stagingBuffer.writeToBuffer((void*)builder.pixels);
         //1 ?
         textureBuffer = std::make_unique<BFEBuffer>(bfeDevice, builder.imageSize, 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        bfeDevice.copyBuffer(stagingBuffer.getBuffer(), textureBuffer.get()->getBuffer(), builder.imageSize);
+        bfeDevice.copyBuffer(pid, stagingBuffer.getBuffer(), textureBuffer.get()->getBuffer(), builder.imageSize);
 
         stbi_image_free(builder.pixels);
 
@@ -231,12 +231,12 @@ namespace BFE {
 
     
 
-    std::unique_ptr<BFETexture> BFETexture::createTextureFromFile(BFEDevice& device, const std::string& fpath) {
+    std::unique_ptr<BFETexture> BFETexture::createTextureFromFile(size_t pid, BFEDevice& device, const std::string& fpath) {
         Builder builder;
         builder.loadTexture(fpath);
 
  
-        return std::make_unique<BFETexture>(device, builder);
+        return std::make_unique<BFETexture>(pid, device, builder);
     }
 
     

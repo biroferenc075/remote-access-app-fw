@@ -1,5 +1,5 @@
 #pragma once
-
+#include "consts.hpp"
 #include "frame.hpp"
 #include "networkMod.hpp"
 #include "displayMod.hpp"
@@ -16,7 +16,7 @@ namespace sc {
 
     class StreamingClient {
     public:
-        StreamingClient(boost::asio::io_context& io_context, tcp::socket&& socket);
+        StreamingClient(boost::asio::io_context& io_context, tcp::socket&& socket, BFEWindow& bfeWindow, BFEDevice& bfeDevice);
         void start();
         void waitUntilReady();
         
@@ -32,6 +32,8 @@ namespace sc {
         bool everyoneReady = false;
 
         bool shouldClose = false; // TODO shut down all threads
-        //TODO all threads should wait until everyone is ready
+
+        BFEWindow& bfeWindow;
+        BFEDevice& bfeDevice;
     };
 }

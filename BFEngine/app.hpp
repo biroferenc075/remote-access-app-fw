@@ -21,10 +21,13 @@ namespace BFE {
 		~App();
 		void run();
 	private:
+		
 		void loadGameObjects();
 		BFEWindow bfeWindow{ WIDTH, HEIGHT, "Vulkan" };
 		BFEDevice bfeDevice{ bfeWindow };
-		BFERenderer bfeRenderer{ bfeWindow, bfeDevice };
+
+		size_t pid = bfeDevice.allocateCommandPool();
+		BFERenderer bfeRenderer{pid, bfeWindow, bfeDevice };
 
 		std::unique_ptr<BFEDescriptorPool> globalPool{};
 		std::vector<BFEGameObject> gameObjects;

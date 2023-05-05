@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/asio.hpp>
-
+#include "consts.hpp"
 namespace sc {
     struct Frame {
         size_t size;

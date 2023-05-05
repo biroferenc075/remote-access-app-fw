@@ -34,6 +34,7 @@ void BFESwapChain::init() {
 }
 
 BFESwapChain::~BFESwapChain() {
+    std::cout << "\n sc destr \n";
   for (auto imageView : swapChainImageViews) {
     vkDestroyImageView(device.device(), imageView, nullptr);
   }
@@ -123,7 +124,6 @@ VkResult BFESwapChain::submitCommandBuffers(
   presentInfo.pSwapchains = swapChains;
 
   presentInfo.pImageIndices = imageIndex;
-
   auto result = vkQueuePresentKHR(device.presentQueue(), &presentInfo);
 
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -153,7 +153,7 @@ void BFESwapChain::createSwapChain() {
   createInfo.imageColorSpace = surfaceFormat.colorSpace;
   createInfo.imageExtent = extent;
   createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;// | VK_IMAGE_USAGE_SAMPLED_BIT; // latter one for streaming
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_SAMPLED_BIT; // latter one for streaming
 
   QueueFamilyIndices indices = device.findPhysicalQueueFamilies();
   uint32_t queueFamilyIndices[] = {indices.graphicsFamily, indices.presentFamily};

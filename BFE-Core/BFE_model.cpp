@@ -19,19 +19,19 @@ namespace std {
 
 }
 namespace BFE {
-	BFEModel::BFEModel(BFEDevice& device, const BFEModel::Builder& builder) : bfeDevice{ device } {
-		createVertexBuffers(builder.vertices);
-		createIndexBuffers(builder.indices);
+	BFEModel::BFEModel(size_t pid, BFEDevice& device, const BFEModel::Builder& builder) : bfeDevice{ device } {
+		createVertexBuffers(pid, builder.vertices);
+		createIndexBuffers(pid, builder.indices);
 	}
 	BFEModel::~BFEModel() {}
 
-	std::unique_ptr<BFEModel> BFEModel::createModelFromFile(BFEDevice& device, const std::string& fpath) {
+	std::unique_ptr<BFEModel> BFEModel::createModelFromFile(size_t pid, BFEDevice& device, const std::string& fpath) {
 		Builder builder{};
 		builder.loadModel(fpath);
 
-		return std::make_unique<BFEModel>(device, builder);
+		return std::make_unique<BFEModel>(pid, device, builder);
 	}
-	void BFEModel::createVertexBuffers(const std::vector<Vertex>& vertices) {
+	void BFEModel::createVertexBuffers(size_t pid, const std::vector<Vertex>& vertices) {
 		vertexCount = static_cast<uint32_t>(vertices.size());
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
 		uint32_t vertexSize = sizeof(vertices[0]);
@@ -42,10 +42,10 @@ namespace BFE {
 		stagingBuffer.writeToBuffer((void*)vertices.data());
 
 		vertexBuffer = std::make_unique<BFEBuffer>(bfeDevice, vertexSize, vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		bfeDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
+		bfeDevice.copyBuffer(pid, stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
 	}
 
-	void BFEModel::createIndexBuffers(const std::vector<uint32_t>& indices) {
+	void BFEModel::createIndexBuffers(size_t pid, const std::vector<uint32_t>& indices) {
 		indexCount = static_cast<uint32_t>(indices.size());
 		hasIndexBuffer = indexCount > 0;
 		if (!hasIndexBuffer) return;
@@ -58,7 +58,7 @@ namespace BFE {
 
 		indexBuffer = std::make_unique<BFEBuffer>(bfeDevice, indexSize, indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		bfeDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
+		bfeDevice.copyBuffer(pid, stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
 	}
 
 	void BFEModel::bind(VkCommandBuffer commandBuffer) {

@@ -16,9 +16,11 @@ struct SwapChainSupportDetails {
 struct QueueFamilyIndices {
   uint32_t graphicsFamily;
   uint32_t presentFamily;
+  uint32_t transferFamily;
   bool graphicsFamilyHasValue = false;
   bool presentFamilyHasValue = false;
-  bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
+  bool transferFamilyHasValue = false;
+  bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue && transferFamilyHasValue; }
 };
 
 class BFEDevice {
@@ -37,15 +39,17 @@ class BFEDevice {
   BFEDevice(BFEDevice &&) = delete;
   BFEDevice &operator=(BFEDevice &&) = delete;
 
-  VkCommandPool getCommandPool() { return commandPool; }
+  size_t allocateCommandPool();
+  VkCommandPool getCommandPool(size_t pid) { return commandPools.at(pid-1); }
   VkDevice device() { return device_; }
   VkSurfaceKHR surface() { return surface_; }
   VkQueue graphicsQueue() { return graphicsQueue_; }
   VkQueue presentQueue() { return presentQueue_; }
+  VkQueue transferQueue() { return transferQueue_; }
 
   SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
   uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-  QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
+  QueueFamilyIndices findPhysicalQueueFamilies() { return indices; }
   VkFormat findSupportedFormat(
       const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
@@ -55,10 +59,10 @@ class BFEDevice {
       VkMemoryPropertyFlags properties,
       VkBuffer &buffer,
       VkDeviceMemory &bufferMemory);
-  VkCommandBuffer beginSingleTimeCommands();
-  void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-  void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-  void copyBufferToImage(
+  VkCommandBuffer beginSingleTimeCommands(size_t pid);
+  void endSingleTimeCommands(size_t pid, VkCommandBuffer commandBuffer);
+  void copyBuffer(size_t pid, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+  void copyBufferToImage(size_t pid,
       VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
   void createImageWithInfo(
@@ -69,13 +73,15 @@ class BFEDevice {
 
   VkPhysicalDeviceProperties properties;
 
+  uint32_t* queueFamilyIndices;
+  VkInstance instance;
  private:
   void createInstance();
   void setupDebugMessenger();
   void createSurface();
   void pickPhysicalDevice();
   void createLogicalDevice();
-  void createCommandPool();
+  size_t createCommandPool();
 
   bool isDeviceSuitable(VkPhysicalDevice device);
   std::vector<const char *> getRequiredExtensions();
@@ -86,16 +92,18 @@ class BFEDevice {
   bool checkDeviceExtensionSupport(VkPhysicalDevice device);
   SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-  VkInstance instance;
+  
   VkDebugUtilsMessengerEXT debugMessenger;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   BFEWindow &window;
-  VkCommandPool commandPool;
+  std::vector<VkCommandPool> commandPools{};
 
   VkDevice device_;
   VkSurfaceKHR surface_;
   VkQueue graphicsQueue_;
   VkQueue presentQueue_;
+  VkQueue transferQueue_;
+  QueueFamilyIndices indices;
 
   const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
   const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};

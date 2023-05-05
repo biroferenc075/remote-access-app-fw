@@ -22,12 +22,13 @@ namespace BFE {
         ~BFETexture();
 
 
-        BFETexture(BFEDevice& device, Builder& builder);
+        BFETexture(size_t pid, BFEDevice& device, Builder& builder);
         VkImage textureImage;
         VkDeviceMemory textureImageMemory;
         VkImageView textureImageView;
         VkSampler textureSampler;
-        static std::unique_ptr<BFETexture> createTextureFromFile(BFEDevice& device, const std::string& fpath);
+        static std::unique_ptr<BFETexture> createTextureFromFile(size_t pid, BFEDevice& device, const std::string& fpath);
+        size_t pid;
     private:
 
         BFEDevice& bfeDevice;

@@ -1,4 +1,5 @@
 #pragma once
+#include "consts.hpp"
 #include "frame.hpp"
 #include "BFE_image.hpp"
 #include "displayMod.hpp"
@@ -17,11 +18,12 @@ namespace sc {
 	public:
 		void submitToQueue(Frame* frame);
 		void run();
-		DecompressionModule(bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, DisplayModule& dm);
+		DecompressionModule(bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, DisplayModule& dm, BFEDevice& bfeDevice);
 
 		bool ready() {
 			return isReady;
 		}
+		size_t pid;
 	private:
 		DisplayModule& dm;
 		queue<Frame*> frameQueue{size_t(16)};

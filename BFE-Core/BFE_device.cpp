@@ -50,11 +50,12 @@ BFEDevice::BFEDevice(BFEWindow &window) : window{window} {
   createSurface();
   pickPhysicalDevice();
   createLogicalDevice();
-  createCommandPool();
+  //createCommandPool();
 }
 
 BFEDevice::~BFEDevice() {
-  vkDestroyCommandPool(device_, commandPool, nullptr);
+    for(auto cmdp : commandPools)
+        vkDestroyCommandPool(device_, cmdp, nullptr);
   vkDestroyDevice(device_, nullptr);
 
   if (enableValidationLayers) {
@@ -72,9 +73,9 @@ void BFEDevice::createInstance() {
 
   VkApplicationInfo appInfo = {};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = "VulkanEngine App";
+  appInfo.pApplicationName = "App";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.pEngineName = "No Engine";
+  appInfo.pEngineName = "BullFrog Engine";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.apiVersion = VK_API_VERSION_1_3;
 
@@ -131,18 +132,19 @@ void BFEDevice::pickPhysicalDevice() {
 }
 
 void BFEDevice::createLogicalDevice() {
-  QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
-  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily, indices.presentFamily};
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily, indices.transferFamily };
 
-  float queuePriority = 1.0f;
+    int n = indices.graphicsFamily == indices.transferFamily ? 1 : 0;
+    float queuePriority[2] = {1.0f, 1.0f};
   for (uint32_t queueFamily : uniqueQueueFamilies) {
     VkDeviceQueueCreateInfo queueCreateInfo = {};
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfo.queueFamilyIndex = queueFamily;
-    queueCreateInfo.queueCount = 1;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfo.queueCount = queueFamily == indices.transferFamily? n + 1 : 1;
+    queueCreateInfo.pQueuePriorities = queuePriority;
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
@@ -169,12 +171,24 @@ void BFEDevice::createLogicalDevice() {
   if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_) != VK_SUCCESS) {
     throw std::runtime_error("failed to create logical device!");
   }
-
+  
   vkGetDeviceQueue(device_, indices.graphicsFamily, 0, &graphicsQueue_);
+  std::cout << "graphicsFamily: " << indices.graphicsFamily << " " << 0 << std::endl;
+  
   vkGetDeviceQueue(device_, indices.presentFamily, 0, &presentQueue_);
+  std::cout << "presentFamily: " << indices.presentFamily << " " << 0 << std::endl;
+  
+  vkGetDeviceQueue(device_, indices.transferFamily, n, &transferQueue_);
+  std::cout << "transferFamily: " << indices.transferFamily << " " << n << std::endl;
+
+  queueFamilyIndices = (uint32_t*)malloc(2 * sizeof(uint32_t));
+  queueFamilyIndices[0] = indices.graphicsFamily;
+  queueFamilyIndices[1] = indices.presentFamily;
+  //queueFamilyIndices[2] = indices.transferFamily;
 }
 
-void BFEDevice::createCommandPool() {
+size_t BFEDevice::createCommandPool() {
+  VkCommandPool commandPool;
   QueueFamilyIndices queueFamilyIndices = findPhysicalQueueFamilies();
 
   VkCommandPoolCreateInfo poolInfo = {};
@@ -186,6 +200,19 @@ void BFEDevice::createCommandPool() {
   if (vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create command pool!");
   }
+
+  commandPools.push_back(commandPool);
+  return commandPools.size();
+}
+
+size_t BFEDevice::allocateCommandPool() {
+    try {
+        return createCommandPool();
+    }
+    catch (std::exception e) {
+        std::cout << e.what();
+        return -1;
+    }
 }
 
 void BFEDevice::createSurface() { window.createWindowSurface(instance, &surface_); }
@@ -265,6 +292,7 @@ std::vector<const char *> BFEDevice::getRequiredExtensions() {
   if (enableValidationLayers) {
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
+  //TODO add 
 
   return extensions;
 }
@@ -329,11 +357,20 @@ QueueFamilyIndices BFEDevice::findQueueFamilies(VkPhysicalDevice device) {
       indices.presentFamily = i;
       indices.presentFamilyHasValue = true;
     }
+    if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT && !indices.graphicsFamilyHasValue) {
+        indices.transferFamily = i;
+        indices.transferFamilyHasValue = true;
+    }
     if (indices.isComplete()) {
       break;
     }
 
     i++;
+  }
+
+  if (!indices.transferFamilyHasValue) {
+      indices.transferFamily = indices.graphicsFamily;
+      indices.transferFamilyHasValue = true;
   }
 
   return indices;
@@ -425,11 +462,11 @@ void BFEDevice::createBuffer(
   vkBindBufferMemory(device_, buffer, bufferMemory, 0);
 }
 
-VkCommandBuffer BFEDevice::beginSingleTimeCommands() {
+VkCommandBuffer BFEDevice::beginSingleTimeCommands(size_t pid) {
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = commandPool;
+  allocInfo.commandPool = commandPools.at(pid);
   allocInfo.commandBufferCount = 1;
 
   VkCommandBuffer commandBuffer;
@@ -443,7 +480,7 @@ VkCommandBuffer BFEDevice::beginSingleTimeCommands() {
   return commandBuffer;
 }
 
-void BFEDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+void BFEDevice::endSingleTimeCommands(size_t pid, VkCommandBuffer commandBuffer) {
   vkEndCommandBuffer(commandBuffer);
 
   VkSubmitInfo submitInfo{};
@@ -451,14 +488,14 @@ void BFEDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
 
-  vkQueueSubmit(graphicsQueue_, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(graphicsQueue_);
+  vkQueueSubmit(transferQueue_, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(transferQueue_);
 
-  vkFreeCommandBuffers(device_, commandPool, 1, &commandBuffer);
+  vkFreeCommandBuffers(device_, commandPools.at(pid), 1, &commandBuffer);
 }
 
-void BFEDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+void BFEDevice::copyBuffer(size_t pid, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands(pid);
 
   VkBufferCopy copyRegion{};
   copyRegion.srcOffset = 0;  // Optional
@@ -466,12 +503,12 @@ void BFEDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize 
   copyRegion.size = size;
   vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-  endSingleTimeCommands(commandBuffer);
+  endSingleTimeCommands(pid, commandBuffer);
 }
 
-void BFEDevice::copyBufferToImage(
+void BFEDevice::copyBufferToImage(size_t pid,
     VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount) {
-  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands(pid);
 
   VkBufferImageCopy region{};
   region.bufferOffset = 0;
@@ -493,7 +530,7 @@ void BFEDevice::copyBufferToImage(
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       1,
       &region);
-  endSingleTimeCommands(commandBuffer);
+  endSingleTimeCommands(pid, commandBuffer);
 }
 
 void BFEDevice::createImageWithInfo(

@@ -1,10 +1,11 @@
 #include "BFE_renderer.hpp"
 #include <stdexcept>
 #include <array>
+#include <iostream>
 
 
 namespace BFE {
-	BFERenderer::BFERenderer(BFEWindow& window, BFEDevice& device) : bfeWindow{ window }, bfeDevice{ device } {
+	BFERenderer::BFERenderer(size_t pid, BFEWindow& window, BFEDevice& device) : bfeWindow{ window }, bfeDevice{ device }, pid(pid) {
 		recreateSwapChain();
 		createCommandBuffers();
 	}
@@ -22,7 +23,7 @@ namespace BFE {
 			glfwWaitEvents();
 		}
 
-
+		//TODO mutex with transfers ?
 		vkDeviceWaitIdle(bfeDevice.device());
 		if (bfeSwapChain == nullptr)
 		{
@@ -47,7 +48,7 @@ namespace BFE {
 
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = bfeDevice.getCommandPool();
+		allocInfo.commandPool = bfeDevice.getCommandPool(pid);
 		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
 		if (vkAllocateCommandBuffers(bfeDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
@@ -57,7 +58,7 @@ namespace BFE {
 	}
 
 	void BFERenderer::freeCommandBuffers() {
-		vkFreeCommandBuffers(bfeDevice.device(), bfeDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+		vkFreeCommandBuffers(bfeDevice.device(), bfeDevice.getCommandPool(pid), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 		commandBuffers.clear();
 	}
 
@@ -65,6 +66,7 @@ namespace BFE {
 		auto result = bfeSwapChain->acquireNextImage(&currentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			std::cout << "\nbeginframe vk out of date!\n";
 			recreateSwapChain();
 			return nullptr;
 		}
@@ -94,7 +96,9 @@ namespace BFE {
 
 		auto result = bfeSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 
-		if (result != VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || bfeWindow.wasWindowResized()) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || bfeWindow.wasWindowResized()) {
+			auto str = bfeWindow.wasWindowResized() ? "res" : "no res";
+			std::cout << "\n" << result << " " << str << "\n endframe sc recreated!\n";
 			bfeWindow.resetWindowResizedFlag();
 			recreateSwapChain();
 		}

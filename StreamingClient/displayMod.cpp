@@ -22,9 +22,11 @@
 
 using namespace sc;
 
-DisplayModule::DisplayModule(boost::asio::io_context& io_context, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) 
-    : io_context_{ io_context}, timer(boost::asio::steady_timer(io_context)) , everyoneReady(readyFlag), readyCond(readyCond), mut(mut) {
+DisplayModule::DisplayModule(boost::asio::io_context& io_context, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, BFEWindow& bfeWindow, BFEDevice& bfeDevice)
+    : io_context_{ io_context}, timer(boost::asio::steady_timer(io_context)), everyoneReady(readyFlag), readyCond(readyCond), mut(mut), bfeWindow(bfeWindow), bfeDevice(bfeDevice), pid(bfeDevice.allocateCommandPool()), bfeRenderer(pid, bfeWindow, bfeDevice) {
     std::cout << "displ ctor\n";
+    bfeRenderer.pid = pid;
+    
    // timer.expires_after(dur);
 }
 DisplayModule::~DisplayModule() {}
@@ -32,14 +34,17 @@ DisplayModule::~DisplayModule() {}
 const std::string& fpath = "image.png";
 
 void DisplayModule::handler(const boost::system::error_code& error, BFERenderer* bfeRenderer) {
-    //std::cout << "displ handl\n";
+    std::cout << "displ handl\n";
     if (!error)
     {
         BFEImage* img;
+
+        VkImage currImg = bfeRenderer->getCurrentImage();
         if (imageQueue.pop(img)) {
             std::cout << "displ pop \n";
             
             auto buffer = bfeRenderer->beginFrame();
+
             VkImageCopy imgCopy{};
 
             VkImageSubresourceLayers srcSubres{};
@@ -47,7 +52,6 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
             srcSubres.baseArrayLayer = 0;
             srcSubres.layerCount = 1;
             srcSubres.mipLevel = 0;
-
 
             VkImageSubresourceLayers dstSubres{};
             dstSubres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -59,18 +63,83 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
             imgCopy.dstSubresource = dstSubres;
             imgCopy.srcOffset = VkOffset3D{ 0,0,0 };
             imgCopy.dstOffset = VkOffset3D{ 0,0,0 };
-            imgCopy.extent = VkExtent3D{ img->imgWidth, img->imgHeight, 1 };
+            uint32_t w = img->imgWidth < bfeRenderer->swapChainWidth() ? img->imgWidth : bfeRenderer->swapChainWidth();
+            uint32_t h = img->imgHeight < bfeRenderer->swapChainHeight() ? img->imgHeight : bfeRenderer->swapChainHeight();
+            imgCopy.extent = VkExtent3D{ w, h, 1};
             
-           // BFEImage::transitionVKImageLayout(bfeDevice, bfeRenderer->getCurrentImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL); //VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+            // transition layout
+            VkImageMemoryBarrier barrier1{};
+            barrier1.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            barrier1.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            barrier1.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-            vkCmdCopyImage(buffer, img->image, img->layout, bfeRenderer->getCurrentImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imgCopy);
+            barrier1.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier1.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+            barrier1.image = currImg;
+            barrier1.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            barrier1.subresourceRange.baseMipLevel = 0;
+            barrier1.subresourceRange.levelCount = 1;
+            barrier1.subresourceRange.baseArrayLayer = 0;
+            barrier1.subresourceRange.layerCount = 1;
+            VkPipelineStageFlags sourceStage1;
+            VkPipelineStageFlags destinationStage1;
+
+            barrier1.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+            barrier1.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            sourceStage1 = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            destinationStage1 = VK_PIPELINE_STAGE_TRANSFER_BIT;
             
-           // BFEImage::transitionVKImageLayout(bfeDevice, bfeRenderer->getCurrentImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+            vkCmdPipelineBarrier(
+                buffer,
+                sourceStage1, destinationStage1,
+                0,
+                0, nullptr,
+                0, nullptr,
+                1, &barrier1
+            );
+           
+            vkCmdCopyImage(buffer, img->image, img->layout, currImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imgCopy);
             
+            
+            
+            // transition layout
+            VkImageMemoryBarrier barrier2{};
+            barrier2.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            barrier2.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+            barrier2.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier2.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+            barrier2.image = currImg;
+            barrier2.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            barrier2.subresourceRange.baseMipLevel = 0;
+            barrier2.subresourceRange.levelCount = 1;
+            barrier2.subresourceRange.baseArrayLayer = 0;
+            barrier2.subresourceRange.layerCount = 1;
+            VkPipelineStageFlags sourceStage2;
+            VkPipelineStageFlags destinationStage2;
+
+            barrier2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier2.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+            sourceStage2 = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destinationStage2 = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+            vkCmdPipelineBarrier(
+                buffer,
+                sourceStage2, destinationStage2,
+                0,
+                0, nullptr,
+                0, nullptr,
+                1, &barrier2
+            );
             bfeRenderer->endFrame();
-        }
-        else {
-            //std::cout << "empty";
+
+            vkQueueWaitIdle(bfeDevice.graphicsQueue());
+            delete img;
         }
         if (!ioerror) {
             timer.expires_after(dur);
@@ -89,47 +158,60 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
 
 
 void DisplayModule::run() {
+    try {
+        std::cout << "displ init\n";
+        auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, &bfeRenderer);
+        isReady = true;
 
-    std::cout << "displ init\n";
-    auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, &bfeRenderer);
-    isReady = true;
-
-    boost::unique_lock<boost::mutex> lock(mut);
-    while (!everyoneReady)
-    {
-        readyCond.wait(lock);
-    }
-
-    lock.unlock();
-
-    std::cout << "displ start\n";
-    timer.expires_after(dur);
-    
-    timer.async_wait(handlerfunc);
-    auto err = boost::system::error_code();
-
-    while (!bfeWindow.shouldClose()) {
-        glfwPollEvents();
-        if (!ioerror) {
-            //timer.wait();
-            //handler(err, &bfeRenderer);
-
-            //timer.async_wait(handlerfunc);
-            //std::cout << "waiting";
+        boost::unique_lock<boost::mutex> lock(mut);
+        while (!everyoneReady)
+        {
+            readyCond.wait(lock);
         }
-        else {
-            std::cout << "ioerror\n";
-            timer.cancel();
-            break;
+
+        lock.unlock();
+
+        std::cout << "displ start\n";
+        timer.expires_after(dur);
+
+        timer.async_wait(handlerfunc);
+        auto err = boost::system::error_code();
+
+        while (!bfeWindow.shouldClose()) {
+            glfwPollEvents();
+            if (!ioerror) {
+                //timer.wait();
+                //handler(err, &bfeRenderer);
+
+                //timer.async_wait(handlerfunc);
+                //std::cout << "waiting";
+            }
+            else {
+                std::cout << "ioerror\n";
+                timer.cancel();
+                break;
+            }
+            Sleep(1);
+
         }
-           
+        BFEImage* img;
+
+        while (imageQueue.pop(img)) {
+            delete img;
+        }
+
+
+        timer.cancel();
+        std::cout << "displ ended\n";
+        vkDeviceWaitIdle(bfeDevice.device());
     }
-    timer.cancel();
-    std::cout << "displ ended\n";
-    vkDeviceWaitIdle(bfeDevice.device());
+    catch (std::exception e) {
+        std::cout << e.what();
+    }
 }
 
 void DisplayModule::submitToQueue(BFEImage* img) {
     imageQueue.push(img); // TODO look into changing to bounded_push
+    img->pid = this->pid;
     std::cout << "displ submit\n";
 }

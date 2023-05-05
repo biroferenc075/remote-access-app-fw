@@ -107,8 +107,8 @@ namespace BFE {
         vkDeviceWaitIdle(bfeDevice.device());
     }
 	void App::loadGameObjects() {
-        std::shared_ptr<BFEModel> bfeModel = BFEModel::createModelFromFile(bfeDevice, "models/Scanibferse.obj");
-        std::shared_ptr<BFETexture> bfeTexture = BFETexture::createTextureFromFile(bfeDevice, "textures/Scanibferse.jpg");
+        std::shared_ptr<BFEModel> bfeModel = BFEModel::createModelFromFile(pid, bfeDevice, "models/Scanibferse.obj");
+        std::shared_ptr<BFETexture> bfeTexture = BFETexture::createTextureFromFile(pid, bfeDevice, "textures/Scanibferse.jpg");
         auto obj = BFEGameObject::createGameObject();
         obj.model = bfeModel;
         obj.texture = bfeTexture;
