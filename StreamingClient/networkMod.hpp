@@ -20,6 +20,7 @@ namespace sc {
         bool ready() {
             return isReady;
         }
+        int findDelim(boost::asio::mutable_buffer& buf, int startIdx);
     private:
         tcp::socket& socket_;
 
@@ -33,7 +34,6 @@ namespace sc {
         bool isReady = false;
         boost::condition_variable& readyCond;
         boost::mutex& mut;
-        //queue<BFEImage* > imageQueue;
     };
 }
 

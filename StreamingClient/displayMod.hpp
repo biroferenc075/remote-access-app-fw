@@ -28,9 +28,9 @@ namespace sc {
 		void handler(const boost::system::error_code& error, BFE::BFERenderer* bfeRenderer);
 		void submitToQueue(BFEImage* img);
 		
-		BFEWindow& bfeWindow; // { WIDTH, HEIGHT, "Vulkan" }; // TODO pull out window and device intialization
-		BFEDevice& bfeDevice; // { bfeWindow };
-		BFERenderer bfeRenderer; // ;
+		BFEWindow& bfeWindow;
+		BFEDevice& bfeDevice;
+		BFERenderer bfeRenderer;
 		bool ready() {
 			return isReady;
 		}

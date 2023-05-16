@@ -10,9 +10,9 @@
 namespace std {
 	template <>
 	struct hash<BFE::BFEModel::Vertex> {
-		size_t operator()(BFE::BFEModel::Vertex const& bfertex) const {
+		size_t operator()(BFE::BFEModel::Vertex const& vertex) const {
 			size_t seed = 0;
-			BFE::hashCombine(seed, bfertex.position, bfertex.texCoord);
+			BFE::hashCombine(seed, vertex.position, vertex.texCoord);
 			return seed;
 		}
 	};
@@ -119,10 +119,10 @@ namespace BFE {
 		std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 		for (const auto& shape : shapes) {
 			for (const auto& index : shape.mesh.indices) {
-				Vertex bfertex{};
+				Vertex vertex{};
 
 				if (index.vertex_index >= 0) {
-					bfertex.position = {
+					vertex.position = {
 						attrib.vertices[3 * index.vertex_index + 0],
 						attrib.vertices[3 * index.vertex_index + 1],
 						attrib.vertices[3 * index.vertex_index + 2],
@@ -130,17 +130,17 @@ namespace BFE {
 
 
 					if (index.texcoord_index >= 0) {
-						bfertex.texCoord = {
+						vertex.texCoord = {
 							attrib.texcoords[2 * index.texcoord_index + 0],
 							attrib.texcoords[2 * index.texcoord_index + 1],
 						};
 					}
 
-					if (uniqueVertices.count(bfertex) == 0) {
-						uniqueVertices[bfertex] = static_cast<uint32_t>(vertices.size());
-						vertices.push_back(bfertex);
+					if (uniqueVertices.count(vertex) == 0) {
+						uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+						vertices.push_back(vertex);
 					}
-					indices.push_back(uniqueVertices[bfertex]);
+					indices.push_back(uniqueVertices[vertex]);
 				}
 			}
 		}

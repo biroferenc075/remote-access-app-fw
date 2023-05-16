@@ -40,7 +40,7 @@ class BFEDevice {
   BFEDevice &operator=(BFEDevice &&) = delete;
 
   size_t allocateCommandPool();
-  VkCommandPool getCommandPool(size_t pid) { return commandPools.at(pid-1); }
+  VkCommandPool getCommandPool(size_t pid) { return commandPools.at(pid); }
   VkDevice device() { return device_; }
   VkSurfaceKHR surface() { return surface_; }
   VkQueue graphicsQueue() { return graphicsQueue_; }

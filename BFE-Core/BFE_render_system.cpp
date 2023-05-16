@@ -47,7 +47,7 @@ namespace BFE {
 		BFEPipeline::defaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = pipelineLayout;
-		bfePipeline = std::make_unique<BFEPipeline>(bfeDevice, "shaders/bfert.spv", "shaders/frag.spv", pipelineConfig);
+		bfePipeline = std::make_unique<BFEPipeline>(bfeDevice, "assets/shaders/vert.spv", "assets/shaders/frag.spv", pipelineConfig);
 
 	}
 

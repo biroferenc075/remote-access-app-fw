@@ -202,7 +202,7 @@ size_t BFEDevice::createCommandPool() {
   }
 
   commandPools.push_back(commandPool);
-  return commandPools.size();
+  return commandPools.size()-1;
 }
 
 size_t BFEDevice::allocateCommandPool() {
@@ -444,7 +444,7 @@ void BFEDevice::createBuffer(
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   if (vkCreateBuffer(device_, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create bfertex buffer!");
+    throw std::runtime_error("failed to create vertex buffer!");
   }
 
   VkMemoryRequirements memRequirements;
@@ -456,7 +456,7 @@ void BFEDevice::createBuffer(
   allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
   if (vkAllocateMemory(device_, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate bfertex buffer memory!");
+    throw std::runtime_error("failed to allocate vertex buffer memory!");
   }
 
   vkBindBufferMemory(device_, buffer, bufferMemory, 0);

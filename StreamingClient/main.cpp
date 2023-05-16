@@ -10,7 +10,6 @@
 
 using boost::asio::ip::tcp;
 using namespace sc;
-//TODO move into sc
 void run(string const& host, boost::asio::io_context& io_context) {
     tcp::resolver resolver(io_context);
     tcp::resolver::results_type endpoints =
@@ -20,7 +19,6 @@ void run(string const& host, boost::asio::io_context& io_context) {
     
     boost::asio::connect(socket, endpoints);
     
-    std::cout << "running";
 
     BFEWindow win{WIDTH, HEIGHT, "Vulkan" };
     BFEDevice dev{ win };
@@ -28,10 +26,6 @@ void run(string const& host, boost::asio::io_context& io_context) {
     StreamingClient streaming_client_(io_context, move(socket), win, dev);
 
     streaming_client_.start();
-
-
-    
-    std::cout << "exiting";
 }
 
 int main(int argc, char* argv[])

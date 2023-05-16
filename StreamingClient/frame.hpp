@@ -10,5 +10,7 @@ namespace sc {
             data = (unsigned char*)malloc(size);
             this->size = size;
         }
+
+        Frame(size_t size, unsigned char* data) : size(size), data(data) {}
     };
 }

@@ -24,24 +24,19 @@ using namespace sc;
 
 DisplayModule::DisplayModule(boost::asio::io_context& io_context, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut, BFEWindow& bfeWindow, BFEDevice& bfeDevice)
     : io_context_{ io_context}, timer(boost::asio::steady_timer(io_context)), everyoneReady(readyFlag), readyCond(readyCond), mut(mut), bfeWindow(bfeWindow), bfeDevice(bfeDevice), pid(bfeDevice.allocateCommandPool()), bfeRenderer(pid, bfeWindow, bfeDevice) {
-    std::cout << "displ ctor\n";
+
     bfeRenderer.pid = pid;
-    
-   // timer.expires_after(dur);
-}
+    }
 DisplayModule::~DisplayModule() {}
 
-const std::string& fpath = "image.png";
 
 void DisplayModule::handler(const boost::system::error_code& error, BFERenderer* bfeRenderer) {
-    std::cout << "displ handl\n";
     if (!error)
     {
         BFEImage* img;
 
         VkImage currImg = bfeRenderer->getCurrentImage();
         if (imageQueue.pop(img)) {
-            std::cout << "displ pop \n";
             
             auto buffer = bfeRenderer->beginFrame();
 
@@ -101,9 +96,7 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
             );
            
             vkCmdCopyImage(buffer, img->image, img->layout, currImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imgCopy);
-            
-            
-            
+                   
             // transition layout
             VkImageMemoryBarrier barrier2{};
             barrier2.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -150,7 +143,6 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
     }
     else {
         static bool written = false;
-        if(!written)std::cout << "display error: " << error.message() << std::endl;
         written = true;
         ioerror = true;
     }
@@ -159,7 +151,6 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
 
 void DisplayModule::run() {
     try {
-        std::cout << "displ init\n";
         auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, &bfeRenderer);
         isReady = true;
 
@@ -171,7 +162,6 @@ void DisplayModule::run() {
 
         lock.unlock();
 
-        std::cout << "displ start\n";
         timer.expires_after(dur);
 
         timer.async_wait(handlerfunc);
@@ -179,15 +169,7 @@ void DisplayModule::run() {
 
         while (!bfeWindow.shouldClose()) {
             glfwPollEvents();
-            if (!ioerror) {
-                //timer.wait();
-                //handler(err, &bfeRenderer);
-
-                //timer.async_wait(handlerfunc);
-                //std::cout << "waiting";
-            }
-            else {
-                std::cout << "ioerror\n";
+            if (ioerror) {
                 timer.cancel();
                 break;
             }
@@ -199,10 +181,7 @@ void DisplayModule::run() {
         while (imageQueue.pop(img)) {
             delete img;
         }
-
-
         timer.cancel();
-        std::cout << "displ ended\n";
         vkDeviceWaitIdle(bfeDevice.device());
     }
     catch (std::exception e) {
@@ -211,7 +190,6 @@ void DisplayModule::run() {
 }
 
 void DisplayModule::submitToQueue(BFEImage* img) {
-    imageQueue.push(img); // TODO look into changing to bounded_push
+    imageQueue.push(img);
     img->pid = this->pid;
-    std::cout << "displ submit\n";
 }

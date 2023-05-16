@@ -45,6 +45,8 @@ public:
     static const int frameNum = 57;
     unsigned char* pixels[frameNum];
     int imgWidth, imgHeight, imgChannels, imageSize;
+    unsigned char delim[4] = { 1u,2u,3u,4u };
+    int delimSize = 4;
     void start(boost::asio::io_context& io_context)
     {
         try {
@@ -100,14 +102,22 @@ public:
     }
 
     void writeThread(boost::asio::io_context& io_context) {
+        socket_.wait_read();
+        int l = 0;
+        boost::array<char, 8> buf;
+        while (l = socket_.read_some(boost::asio::buffer(buf))) {
+            if (l > 0 && buf[0] == 'r') {
+                break;
+            }
+        }
         boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));//boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
        
         std::cout << "write\n";
         int i = 0;
         while (!shouldStop)
-        {
+        {   
             sendMsg(pixels[i++%frameNum]);
-            
+            sendDelim();
             std::cout << i << " tick\n";
             t.expires_from_now(boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));
             t.wait();
@@ -115,8 +125,23 @@ public:
     }
 
     void sendMsg(void* src) {
-        int sent = socket_.send(boost::asio::buffer(src, imageSize));
+        int sent = 0;
+        int total = 0;
         //boost::asio::async_write(socket_, boost::asio::buffer(src, imageSize), boost::bind(&tcp_connection::handle_write, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+        while (total < imageSize) {
+            sent = socket_.send(boost::asio::buffer((unsigned char*)src+total, imageSize-total));
+            total += sent;
+            //std::cout << imageSize - total << std::endl;
+        }
+    }
+
+    void sendDelim() {
+        int sent = 0;
+        int total = 0;
+        while (total < delimSize) {
+            sent = socket_.send(boost::asio::buffer(delim + total, delimSize - total));
+            total += sent;
+        }
     }
 
 private:
@@ -146,7 +171,7 @@ public:
         : io_context_(io_context),
         acceptor_(io_context, tcp::endpoint(tcp::v4(), 13))
     {
-        start_accept();
+            start_accept();
     }
 
 private:

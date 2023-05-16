@@ -97,8 +97,6 @@ namespace BFE {
 		auto result = bfeSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || bfeWindow.wasWindowResized()) {
-			auto str = bfeWindow.wasWindowResized() ? "res" : "no res";
-			std::cout << "\n" << result << " " << str << "\n endframe sc recreated!\n";
 			bfeWindow.resetWindowResizedFlag();
 			recreateSwapChain();
 		}
