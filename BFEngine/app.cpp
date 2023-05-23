@@ -114,6 +114,7 @@ namespace BFE {
         obj.texture = bfeTexture;
         obj.transform.translation = { 0.0f, 0.0f, 2.5f };
         obj.transform.scale = { 1.5f, 1.5f, 1.5f };
+        obj.transform.rotation = { 3.14f, 0.0f, 0.0f };
 
         gameObjects.push_back(std::move(obj));
     }

@@ -34,7 +34,6 @@ void BFESwapChain::init() {
 }
 
 BFESwapChain::~BFESwapChain() {
-    std::cout << "\n sc destr \n";
   for (auto imageView : swapChainImageViews) {
     vkDestroyImageView(device.device(), imageView, nullptr);
   }

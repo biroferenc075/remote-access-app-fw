@@ -128,7 +128,7 @@ namespace BFE {
 
         vkCmdPipelineBarrier(
             commandBuffer,
-            0 /* TODO */, 0 /* TODO */,
+            sourceStage , destinationStage,
             0,
             0, nullptr,
             0, nullptr,
