@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BFE_renderer_base.hpp"
 #include "BFE_window.hpp"
 #include "BFE_device.hpp"
 #include "BFE_swap_chain.hpp"
@@ -7,7 +8,7 @@
 #include <memory>
 #include <vector>
 namespace BFE {
-		class BFERenderer {
+		class BFERenderer : public BFERendererBase {
 	public:
 		BFERenderer(size_t pid, BFEWindow& window, BFEDevice& device);
 		~BFERenderer();
@@ -16,31 +17,15 @@ namespace BFE {
 		void endFrame();
 		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 		void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
-		bool isFrameinProgress() const { return isFrameStarted; }
-		VkCommandBuffer getCurrentCommandBuffer() const { return commandBuffers[currentFrameIndex]; }
 		VkImage getCurrentImage() const { return bfeSwapChain->getImage(currentImageIndex); }
 		VkRenderPass getSwapChainRenderPass() const { return bfeSwapChain->getRenderPass(); }
 		float getAspectRatio() const {
 			return bfeSwapChain->extentAspectRatio();
 		}
-		int getFrameIndex() const {
-			return currentFrameIndex;
-		}
 		uint32_t swapChainWidth() { return bfeSwapChain->width(); }
 		uint32_t swapChainHeight() { return bfeSwapChain->height(); }
-		size_t pid;
 	private:
-		void createCommandBuffers();
-		void freeCommandBuffers();
 		void recreateSwapChain();
-		BFEWindow& bfeWindow;
-		BFEDevice& bfeDevice;
 		std::unique_ptr<BFESwapChain> bfeSwapChain;
-		std::vector<VkCommandBuffer> commandBuffers;
-		BFERenderer(const BFERenderer&);
-		BFERenderer& operator=(const BFERenderer&);
-		uint32_t currentImageIndex;
-		int currentFrameIndex{0};
-		bool isFrameStarted{ false};
 	};
 }

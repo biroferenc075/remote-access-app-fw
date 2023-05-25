@@ -7,7 +7,7 @@ namespace BFE {
 class BFEBuffer {
  public:
      BFEBuffer(
-         BFEDevice& device,
+         BFEDeviceBase& device,
       VkDeviceSize instanceSize,
       uint32_t instanceCount,
       VkBufferUsageFlags usageFlags,
@@ -43,7 +43,7 @@ class BFEBuffer {
  private:
   static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
-  BFEDevice& bfeDevice;
+  BFEDeviceBase& bfeDevice;
   void* mapped = nullptr;
   VkBuffer buffer = VK_NULL_HANDLE;
   VkDeviceMemory memory = VK_NULL_HANDLE;

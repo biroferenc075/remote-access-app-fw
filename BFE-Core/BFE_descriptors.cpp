@@ -29,7 +29,7 @@ namespace BFE {
     // *************** Descriptor Set Layout *********************
 
     BFEDescriptorSetLayout::BFEDescriptorSetLayout(
-        BFEDevice& bfeDevice, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
+        BFEDeviceBase& bfeDevice, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
         : bfeDevice{ bfeDevice }, bindings{ bindings } {
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
         for (auto kv : bindings) {
@@ -79,7 +79,7 @@ namespace BFE {
     // *************** Descriptor Pool *********************
 
     BFEDescriptorPool::BFEDescriptorPool(
-        BFEDevice& bfeDevice,
+        BFEDeviceBase& bfeDevice,
         uint32_t maxSets,
         VkDescriptorPoolCreateFlags poolFlags,
         const std::vector<VkDescriptorPoolSize>& poolSizes)

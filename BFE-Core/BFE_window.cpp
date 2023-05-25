@@ -1,7 +1,7 @@
 #include "BFE_window.hpp"
 #include <stdexcept>
 namespace BFE {
-	BFEWindow::BFEWindow(int _width, int _height, std::string _name) : width{ _width }, height{ _height }, name{_name} {
+	BFEWindow::BFEWindow(int _width, int _height, std::string _name) : BFEWindowBase{ _width, _height }, name{_name} {
 		initWindow();
 	}
 	BFEWindow::~BFEWindow() {

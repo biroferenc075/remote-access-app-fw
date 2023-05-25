@@ -31,15 +31,15 @@ namespace BFE {
 
 			void loadModel(const std::string& fpath);
 		};
-		BFEModel(size_t pid, BFEDevice& device, const BFEModel::Builder &builder);
+		BFEModel(size_t pid, BFEDeviceBase& device, const BFEModel::Builder &builder);
 		~BFEModel();
-		static std::unique_ptr<BFEModel> createModelFromFile(size_t pid, BFEDevice& device, const std::string& fpath);
+		static std::unique_ptr<BFEModel> createModelFromFile(size_t pid, BFEDeviceBase& device, const std::string& fpath);
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 	private:
 		void createVertexBuffers(size_t pid, const std::vector<Vertex>& vertices);
 		void createIndexBuffers(size_t pid, const std::vector<uint32_t>& indices);
-		BFEDevice& bfeDevice;
+		BFEDeviceBase& bfeDevice;
 		std::unique_ptr<BFEBuffer> vertexBuffer;
 		uint32_t vertexCount;
 

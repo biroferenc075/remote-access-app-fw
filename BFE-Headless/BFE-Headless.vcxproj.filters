@@ -15,12 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="StreamingServer.cpp">
+    <ClCompile Include="..\BFE-Core\BFE_window_hs.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\BFE-Core\BFE_window_hs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BFE_device_hs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BFE_renderer_hs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="StreamingServer.hpp">
+    <ClInclude Include="..\BFE-Core\BFE_device_hs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BFE_renderer_hs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

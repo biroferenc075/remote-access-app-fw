@@ -28,7 +28,7 @@ namespace BFE {
     }
 
     BFEBuffer::BFEBuffer(
-        BFEDevice& device,
+        BFEDeviceBase& device,
         VkDeviceSize instanceSize,
         uint32_t instanceCount,
         VkBufferUsageFlags usageFlags,

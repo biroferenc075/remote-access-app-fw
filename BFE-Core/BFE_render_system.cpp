@@ -12,7 +12,7 @@ namespace BFE {
 		glm::mat4 modelMatrix{ 1.0f };
 		alignas(16) glm::vec3 color;
 	};
-	BFERenderSystem::BFERenderSystem(BFEDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : bfeDevice{ device } {
+	BFERenderSystem::BFERenderSystem(BFEDeviceBase& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : bfeDevice{ device } {
 		createPipelineLayout(globalSetLayout);
 		createPipeline(renderPass);
 	}

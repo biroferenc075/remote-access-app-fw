@@ -27,12 +27,12 @@ namespace BFE {
 
 	class BFEPipeline {
 	public:
-		BFEPipeline(BFEDevice& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo);
+		BFEPipeline(BFEDeviceBase& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo);
 		~BFEPipeline();
 		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
 		void bind(VkCommandBuffer commandBuffer);
 	private:
-		BFEDevice& bfeDevice;
+		BFEDeviceBase& bfeDevice;
 		VkPipeline graphicsPipeline;
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;

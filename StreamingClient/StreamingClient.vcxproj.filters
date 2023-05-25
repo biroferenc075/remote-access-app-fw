@@ -41,13 +41,7 @@
     <ClInclude Include="streamingClient.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="frame.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="decompressionMod.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="consts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

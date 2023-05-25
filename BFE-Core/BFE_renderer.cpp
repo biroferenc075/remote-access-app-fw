@@ -2,17 +2,14 @@
 #include <stdexcept>
 #include <array>
 #include <iostream>
-
+#include "consts.hpp"
 
 namespace BFE {
-	BFERenderer::BFERenderer(size_t pid, BFEWindow& window, BFEDevice& device) : bfeWindow{ window }, bfeDevice{ device }, pid(pid) {
+	BFERenderer::BFERenderer(size_t pid, BFEWindow& window, BFEDevice& device) : BFERendererBase(pid, window, device) {
 		recreateSwapChain();
-		createCommandBuffers();
 	}
 
-	BFERenderer::~BFERenderer() {
-		freeCommandBuffers();
-	}
+	BFERenderer::~BFERenderer() {}
 
 
 	void BFERenderer::recreateSwapChain() {
@@ -27,39 +24,17 @@ namespace BFE {
 		vkDeviceWaitIdle(bfeDevice.device());
 		if (bfeSwapChain == nullptr)
 		{
-			bfeSwapChain = std::make_unique<BFESwapChain>(bfeDevice, extent);
+			bfeSwapChain = std::make_unique<BFESwapChain>(dynamic_cast<BFEDevice&>(bfeDevice), extent);
 		}
 		else {
 			std::shared_ptr<BFESwapChain> oldSwapChain = std::move(bfeSwapChain);
-			bfeSwapChain = std::make_unique<BFESwapChain>(bfeDevice, extent, oldSwapChain);
+			bfeSwapChain = std::make_unique<BFESwapChain>(dynamic_cast<BFEDevice&>(bfeDevice), extent, oldSwapChain);
 			if (!oldSwapChain->compareSwapFormats(*bfeSwapChain.get())) {
 				throw std::runtime_error("Swap chain image(or depth) format has changed!");
 			}
 		
 		}
 
-	}
-
-
-	void BFERenderer::createCommandBuffers() {
-		commandBuffers.resize(BFESwapChain::MAX_FRAMES_IN_FLIGHT);
-
-		VkCommandBufferAllocateInfo allocInfo{};
-
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = bfeDevice.getCommandPool(pid);
-		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-		if (vkAllocateCommandBuffers(bfeDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate command buffers!");
-		}
-	}
-
-	void BFERenderer::freeCommandBuffers() {
-		vkFreeCommandBuffers(bfeDevice.device(), bfeDevice.getCommandPool(pid), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-		commandBuffers.clear();
 	}
 
 	VkCommandBuffer BFERenderer::beginFrame() {
@@ -105,7 +80,7 @@ namespace BFE {
 		}
 
 		isFrameStarted = false;
-		currentFrameIndex = (currentFrameIndex + 1) % BFESwapChain::MAX_FRAMES_IN_FLIGHT;
+		currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 	void BFERenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
 		VkRenderPassBeginInfo renderPassInfo{};

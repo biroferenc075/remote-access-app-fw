@@ -7,7 +7,7 @@
 #include <stb_image.h>
 //TODO separate sampler and image
 namespace BFE {
-    BFETexture::BFETexture(size_t pid, BFEDevice& device, Builder& builder) : bfeDevice{ device }, pid(pid) {
+    BFETexture::BFETexture(size_t pid, BFEDeviceBase& device, Builder& builder) : bfeDevice{ device }, pid(pid) {
        
         createTextureImage(device, builder);
         createTextureImageView();
@@ -165,7 +165,7 @@ namespace BFE {
         textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
     }
 
-    void BFETexture::createTextureImage(BFEDevice& device, Builder& builder) {
+    void BFETexture::createTextureImage(BFEDeviceBase& device, Builder& builder) {
         BFEBuffer stagingBuffer = BFEBuffer{ device, builder.imageSize, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, };
         stagingBuffer.map();
         stagingBuffer.writeToBuffer((void*)builder.pixels);
@@ -231,7 +231,7 @@ namespace BFE {
 
     
 
-    std::unique_ptr<BFETexture> BFETexture::createTextureFromFile(size_t pid, BFEDevice& device, const std::string& fpath) {
+    std::unique_ptr<BFETexture> BFETexture::createTextureFromFile(size_t pid, BFEDeviceBase& device, const std::string& fpath) {
         Builder builder;
         builder.loadTexture(fpath);
 

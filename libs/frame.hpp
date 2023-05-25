@@ -1,7 +1,7 @@
 #pragma once
-#include <boost/asio.hpp>
 #include "consts.hpp"
-namespace sc {
+#include <memory>
+namespace BFE {
     struct Frame {
         size_t size;
         unsigned char* data;
@@ -12,5 +12,9 @@ namespace sc {
         }
 
         Frame(size_t size, unsigned char* data) : size(size), data(data) {}
+
+        ~Frame() {
+            free(data);
+        }
     };
 }

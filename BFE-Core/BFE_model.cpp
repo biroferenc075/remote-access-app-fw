@@ -19,13 +19,13 @@ namespace std {
 
 }
 namespace BFE {
-	BFEModel::BFEModel(size_t pid, BFEDevice& device, const BFEModel::Builder& builder) : bfeDevice{ device } {
+	BFEModel::BFEModel(size_t pid, BFEDeviceBase& device, const BFEModel::Builder& builder) : bfeDevice{ device } {
 		createVertexBuffers(pid, builder.vertices);
 		createIndexBuffers(pid, builder.indices);
 	}
 	BFEModel::~BFEModel() {}
 
-	std::unique_ptr<BFEModel> BFEModel::createModelFromFile(size_t pid, BFEDevice& device, const std::string& fpath) {
+	std::unique_ptr<BFEModel> BFEModel::createModelFromFile(size_t pid, BFEDeviceBase& device, const std::string& fpath) {
 		Builder builder{};
 		builder.loadModel(fpath);
 

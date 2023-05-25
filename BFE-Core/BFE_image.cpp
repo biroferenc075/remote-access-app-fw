@@ -5,7 +5,7 @@
 #include <stb_image.h>
 #include <iostream>
 namespace BFE {
-    BFEImage::BFEImage(size_t pid, BFEDevice& device, Builder& builder) : bfeDevice{ device }, pid(pid) {
+    BFEImage::BFEImage(size_t pid, BFEDeviceBase& device, Builder& builder) : bfeDevice{ device }, pid(pid) {
         BFEBuffer stagingBuffer = BFEBuffer{ device, builder.imageSize, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
         stagingBuffer.map();
         stagingBuffer.writeToBuffer((void*)builder.pixels);
@@ -23,7 +23,7 @@ namespace BFE {
 
         stbi_image_free(builder.pixels);
     }
-    BFEImage::BFEImage(size_t pid, BFEDevice& device, Builder& builder, VkImageUsageFlags usage, VkImageLayout finalLayout) : bfeDevice{ device }, pid(pid) {
+    BFEImage::BFEImage(size_t pid, BFEDeviceBase& device, Builder& builder, VkImageUsageFlags usage, VkImageLayout finalLayout) : bfeDevice{ device }, pid(pid) {
         BFEBuffer stagingBuffer = BFEBuffer{ device, builder.imageSize, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, };
         stagingBuffer.map();
         stagingBuffer.writeToBuffer((void*)builder.pixels);
@@ -46,7 +46,7 @@ namespace BFE {
         vkFreeMemory(bfeDevice.device(), imageMemory, nullptr);
     }
 
-    void BFEImage::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, BFEDevice& bfeDevice) {
+    void BFEImage::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, BFEDeviceBase& bfeDevice) {
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -103,7 +103,7 @@ namespace BFE {
         return commandBuffer;
     }
 
-    VkCommandBuffer BFEImage::beginSingleTimeCommands(size_t pid, BFEDevice& device) {
+    VkCommandBuffer BFEImage::beginSingleTimeCommands(size_t pid, BFEDeviceBase& device) {
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -137,7 +137,7 @@ namespace BFE {
         vkFreeCommandBuffers(bfeDevice.device(), bfeDevice.getCommandPool(pid), 1, &commandBuffer);
     }
 
-    void BFEImage::endSingleTimeCommands(size_t pid, VkQueue queue, VkCommandBuffer commandBuffer, BFEDevice& device) {
+    void BFEImage::endSingleTimeCommands(size_t pid, VkQueue queue, VkCommandBuffer commandBuffer, BFEDeviceBase& device) {
         vkEndCommandBuffer(commandBuffer);
 
         VkSubmitInfo submitInfo{};
@@ -156,7 +156,7 @@ namespace BFE {
         layout = newLayout;
     }
 
-    void BFEImage::transitionVKImageLayout(size_t pid, VkQueue queue, BFEDevice& device, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+    void BFEImage::transitionVKImageLayout(size_t pid, VkQueue queue, BFEDeviceBase& device, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands(pid, device);
 
         VkImageMemoryBarrier barrier{};
@@ -244,12 +244,12 @@ namespace BFE {
     }
    
 
-    std::unique_ptr<BFEImage> BFEImage::createImageFromFile(size_t pid, BFEDevice& device, const std::string& fpath) {
+    std::unique_ptr<BFEImage> BFEImage::createImageFromFile(size_t pid, BFEDeviceBase& device, const std::string& fpath) {
         Builder builder;
         builder.loadImage(fpath);
         return std::make_unique<BFEImage>(pid, device, builder);
     }
-    std::unique_ptr<BFEImage> BFEImage::createImageFromBuffer(size_t pid, BFEDevice& device, unsigned char* buffer, int width, int height, int channels) {
+    std::unique_ptr<BFEImage> BFEImage::createImageFromBuffer(size_t pid, BFEDeviceBase& device, unsigned char* buffer, int width, int height, int channels) {
         Builder builder;
         builder.pixels = buffer;
         builder.imgWidth = width;

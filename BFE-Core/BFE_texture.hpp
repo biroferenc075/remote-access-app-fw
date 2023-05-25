@@ -17,21 +17,21 @@ namespace BFE {
             void loadTexture(const std::string& fpath);
         };
 
-        void createTextureImage(BFEDevice& device, Builder& builder);
+        void createTextureImage(BFEDeviceBase& device, Builder& builder);
         void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
         ~BFETexture();
 
 
-        BFETexture(size_t pid, BFEDevice& device, Builder& builder);
+        BFETexture(size_t pid, BFEDeviceBase& device, Builder& builder);
         VkImage textureImage;
         VkDeviceMemory textureImageMemory;
         VkImageView textureImageView;
         VkSampler textureSampler;
-        static std::unique_ptr<BFETexture> createTextureFromFile(size_t pid, BFEDevice& device, const std::string& fpath);
+        static std::unique_ptr<BFETexture> createTextureFromFile(size_t pid, BFEDeviceBase& device, const std::string& fpath);
         size_t pid;
     private:
 
-        BFEDevice& bfeDevice;
+        BFEDeviceBase& bfeDevice;
         std::unique_ptr<BFEBuffer> textureBuffer;
         
 

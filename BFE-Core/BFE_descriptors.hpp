@@ -12,7 +12,7 @@ class BFEDescriptorSetLayout {
  public:
   class Builder {
    public:
-    Builder(BFEDevice &bfeDevice) : bfeDevice{bfeDevice} {}
+    Builder(BFEDeviceBase &bfeDevice) : bfeDevice{bfeDevice} {}
 
     Builder &addBinding(
         uint32_t binding,
@@ -22,12 +22,12 @@ class BFEDescriptorSetLayout {
     std::unique_ptr<BFEDescriptorSetLayout> build() const;
 
    private:
-       BFEDevice &bfeDevice;
+       BFEDeviceBase &bfeDevice;
     std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
   };
 
   BFEDescriptorSetLayout(
-      BFEDevice& bfeDevice, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
+      BFEDeviceBase& bfeDevice, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
   ~BFEDescriptorSetLayout();
   BFEDescriptorSetLayout(const BFEDescriptorSetLayout&) = delete;
   BFEDescriptorSetLayout&operator=(const BFEDescriptorSetLayout&) = delete;
@@ -35,7 +35,7 @@ class BFEDescriptorSetLayout {
   VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
  private:
-     BFEDevice& bfeDevice;
+     BFEDeviceBase& bfeDevice;
   VkDescriptorSetLayout descriptorSetLayout;
   std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
@@ -46,7 +46,7 @@ class BFEDescriptorPool {
  public:
   class Builder {
    public:
-       Builder(BFEDevice& bfeDevice) : bfeDevice{ bfeDevice } {}
+       Builder(BFEDeviceBase& bfeDevice) : bfeDevice{ bfeDevice } {}
 
     Builder &addPoolSize(VkDescriptorType descriptorType, uint32_t count);
     Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
@@ -54,14 +54,14 @@ class BFEDescriptorPool {
     std::unique_ptr<BFEDescriptorPool> build() const;
 
    private:
-       BFEDevice& bfeDevice;
+       BFEDeviceBase& bfeDevice;
     std::vector<VkDescriptorPoolSize> poolSizes{};
     uint32_t maxSets = 1000;
     VkDescriptorPoolCreateFlags poolFlags = 0;
   };
 
   BFEDescriptorPool(
-      BFEDevice& bfeDevice,
+      BFEDeviceBase& bfeDevice,
       uint32_t maxSets,
       VkDescriptorPoolCreateFlags poolFlags,
       const std::vector<VkDescriptorPoolSize> &poolSizes);
@@ -77,7 +77,7 @@ class BFEDescriptorPool {
   void resetPool();
 
  private:
-  BFEDevice & bfeDevice;
+  BFEDeviceBase& bfeDevice;
   VkDescriptorPool descriptorPool;
 
   friend class BFEDescriptorWriter;

@@ -13,14 +13,14 @@ namespace BFE {
 	class BFERenderSystem {
 	public:
 
-		BFERenderSystem(BFEDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+		BFERenderSystem(BFEDeviceBase& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~BFERenderSystem();
 
 		void renderGameObjects(FrameInfo& frameInfo, std::vector<BFEGameObject>& gameobjects);
 	private:
 		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void createPipeline(VkRenderPass renderPass);
-		BFEDevice& bfeDevice;
+		BFEDeviceBase& bfeDevice;
 		std::unique_ptr<BFEPipeline> bfePipeline;
 		VkPipelineLayout pipelineLayout;
 		BFERenderSystem(const BFERenderSystem&);

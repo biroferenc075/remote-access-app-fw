@@ -1,12 +1,13 @@
 #pragma once
 
-#include "BFE_window.hpp"
-#include "BFE_device.hpp"
+#include "BFE_window_hs.hpp"
+#include "BFE_device_hs.hpp"
 #include "BFE_model.hpp"
 #include "BFE_gameobject.hpp"
-#include "BFE_renderer.hpp"
+#include "BFE_renderer_hs.hpp"
 #include "BFE_descriptors.hpp"
 #include "BFE_texture.hpp"
+
 
 #include <memory>
 #include <vector>
@@ -14,24 +15,23 @@
 namespace BFE {
 	class App {
 	public:
-		static constexpr int WIDTH = 800;
-		static constexpr int HEIGHT = 600;
-
-		App();
+		App(boost::lockfree::queue<BFE::Frame*>& frameQueue);
 		~App();
 		void run();
 	private:
+		boost::lockfree::queue<BFE::Frame*>& frameQueue;
 		
 		void loadGameObjects();
-		BFEWindow bfeWindow{ WIDTH, HEIGHT, "Vulkan" };
-		BFEDevice bfeDevice{ bfeWindow };
+		BFEWindowHS bfeWindow{ WIDTH, HEIGHT};
+		BFEDeviceHS bfeDevice{ bfeWindow };
 
 		size_t pid = bfeDevice.allocateCommandPool();
-		BFERenderer bfeRenderer{pid, bfeWindow, bfeDevice };
+		BFERendererHS bfeRenderer{pid, bfeWindow, bfeDevice, frameQueue };
 
 		std::unique_ptr<BFEDescriptorPool> globalPool{};
 		std::vector<BFEGameObject> gameObjects;
 		App(const App&);
 		App& operator=(const App&);
+
 	};
 }

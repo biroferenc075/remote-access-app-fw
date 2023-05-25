@@ -14,8 +14,6 @@ namespace BFE {
 
 class BFESwapChain {
  public:
-  static constexpr int MAX_FRAMES_IN_FLIGHT = 1;
-
   BFESwapChain(BFEDevice& deviceRef, VkExtent2D windowExtent);
   BFESwapChain(BFEDevice& deviceRef, VkExtent2D windowExtent, std::shared_ptr<BFESwapChain>previous);
   ~BFESwapChain();

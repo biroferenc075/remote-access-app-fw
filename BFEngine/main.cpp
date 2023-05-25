@@ -4,10 +4,13 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "StreamingServer.hpp"
 int main() {
-BFE::App app{};
-
+boost::lockfree::queue<BFE::Frame*> frameQueue{ size_t(16) };
+BFE::App app(frameQueue);
 	try {
+		boost::thread t(boost::bind(&runServer, &frameQueue));
+		t.detach();
 		app.run();
 	}
 	catch (const std::exception& e) {

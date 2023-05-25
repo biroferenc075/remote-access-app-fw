@@ -174,10 +174,8 @@
     <ClCompile Include="streamingClient.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="consts.hpp" />
     <ClInclude Include="decompressionMod.hpp" />
     <ClInclude Include="displayMod.hpp" />
-    <ClInclude Include="frame.hpp" />
     <ClInclude Include="networkMod.hpp" />
     <ClInclude Include="streamingClient.hpp" />
   </ItemGroup>

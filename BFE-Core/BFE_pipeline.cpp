@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 namespace BFE {
-	BFEPipeline::BFEPipeline(BFEDevice& device, const std::string& bfertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo) : bfeDevice{ device } {
+	BFEPipeline::BFEPipeline(BFEDeviceBase& device, const std::string& bfertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo) : bfeDevice{ device } {
 		createPipeline(bfertPath, fragPath, configInfo);
 	}
 

@@ -60,6 +60,15 @@
     <ClInclude Include="BFE_window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BFE_device_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BFE_window_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BFE_renderer_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BFE_buffer.cpp">
@@ -96,6 +105,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BFE_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BFE_device_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BFE_renderer_base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
