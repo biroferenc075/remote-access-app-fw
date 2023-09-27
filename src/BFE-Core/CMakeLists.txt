@@ -10,7 +10,7 @@ list(APPEND SRC BFE_buffer.cpp BFE_camera.cpp BFE_descriptors.cpp BFE_device.cpp
 list(APPEND HDR BFE_buffer.hpp BFE_camera.hpp BFE_descriptors.hpp BFE_device.hpp BFE_device_base.hpp BFE_image.hpp BFE_model.hpp BFE_pipeline.hpp BFE_renderer.hpp BFE_renderer_base.hpp BFE_render_system.hpp BFE_swap_chain.hpp BFE_texture.hpp BFE_window.hpp BFE_frame_info.hpp BFE_gameobject.hpp BFE_utils.h BFE_window_base.hpp)
 
 add_library (BFE-Core STATIC ${SRC} ${HDR})
-target_link_directories(BFE-Core PUBLIC ${Vulkan_LIBRARIES} "C:/SDK/glfw-3.3.8.bin.WIN64/lib-vc2022/glfw3.lib" "C:/SDK/glfw-3.3.8.bin.WIN64/lib-vc2022/glfw3_mt.lib")
+target_link_directories(BFE-Core PUBLIC ${Vulkan_LIBRARIES} ${glm_INCLUDE_DIR})
 target_link_libraries(BFE-Core INTERFACE vulkan-1 ${GLFW3_LIBRARY})
 target_include_directories(BFE-Core PRIVATE ${GLFW3_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} ${glm_INCLUDE_DIR} ${LIBS})
 include_directories(${INCLUDES})

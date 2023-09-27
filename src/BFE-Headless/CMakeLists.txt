@@ -10,7 +10,6 @@ list(APPEND HDR BFE_device_hs.hpp BFE_renderer_hs.hpp BFE_window_hs.hpp)
 
 add_library (BFE-Headless STATIC ${SRC} ${HDR})
 target_link_libraries(BFE-Headless BFE-Core)
-target_link_directories(BFE-Headless PUBLIC ${Vulkan_LIBRARY} Vulkan::Vulkan)
 target_include_directories(BFE-Headless PUBLIC ${GLFW3_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} ${glm_INCLUDE_DIR} ${LIBS})
 include_directories(${INCLUDES})
 link_directories(${LIBRARIES})

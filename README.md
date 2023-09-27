@@ -1,4 +1,4 @@
-# Application Streaming Framework
+# Remote Access Application Framework
 
 the task is to create a framework that streams an application's rendering output to a remote PC and sends the user input back to the server, allowing the client to "run" the application without having the hardware requirements
 

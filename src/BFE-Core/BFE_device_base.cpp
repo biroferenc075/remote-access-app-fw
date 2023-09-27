@@ -1,10 +1,11 @@
-#include "BFE_device_base.hpp"
 
 #include <cstring>
 #include <iostream>
 #include <set>
 #include <unordered_set>
 #include <Windows.h>
+
+#include "BFE_device_base.hpp"
 
 namespace BFE {
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
