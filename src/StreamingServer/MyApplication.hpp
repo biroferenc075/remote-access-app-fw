@@ -1,20 +1,25 @@
 #include "RemoteApplication.hpp"
 #include "KeyboardCameraController.hpp"
+#include "MouseCameraController.hpp"
 namespace Example {
 	class MyApplication : public RemoteApplication {
 	public:
 		void onStart();
 		void onConn();
 		void onDisconn();
-		void onUpdate(float totalTime, float deltaTime);
+		void onUpdate(float totalTime, float deltaTime, std::set<int>& keysPressed, std::set<int>& keysReleased, std::set<int>& keysHeld);
 		void onDraw(float totalTime, float deltaTime);
-		void onKey();
-		void onMouse();
-		void onWindowEvent();
+		void onKeyPress(int key, int mods, int scancode);
+		void onKeyRelease(int key, int mods, int scancode);
+		void onMouseMove(double dX, double dY, double x, double y);
+		void onMousePress(double x, double y, int button, int mods);
+		void onMouseRelease(double x, double y, int button, int mods);
+		void onWindowEvent(int x, int y);
 	private:
 		BFEGameObject viewerObject = BFEGameObject::createGameObject();
 		BFECamera camera;
-		KeyboardCameraController cameraController;
+		KeyboardCameraController keyboardCameraController;
+		MouseCameraController mouseCameraController;
 		std::vector<std::unique_ptr<BFEBuffer>> uboBuffers;
 		std::vector<VkDescriptorSet> globalDescriptorSets;
 		std::unique_ptr<BFEDescriptorPool> globalPool{};
@@ -26,7 +31,9 @@ namespace Example {
 
 		BFERenderSystem renderSystem = BFERenderSystem(bfeDevice, bfeRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());;
 		void loadGameObjects();
-		};
+		glm::vec2 mouseMoveSinceLastFrame{ 0 };
+	};
+	
 	struct UBO {
 		glm::mat4 projectionView{ 1.f };
 		glm::vec3 lightDir = glm::normalize(glm::vec3{ 1.f, -3.f, -1.f });

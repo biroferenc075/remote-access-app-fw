@@ -19,7 +19,8 @@ namespace sc {
         StreamingClient(boost::asio::io_context& io_context, tcp::socket&& socket, BFEWindow& bfeWindow, BFEDevice& bfeDevice);
         void start();
         void waitUntilReady();
-        
+        void registerCallbacks(BFEWindow& window);
+        void pollMouse();
     private:
         boost::asio::io_context& io_context_;
         tcp_client network_client_;
@@ -35,5 +36,7 @@ namespace sc {
 
         BFEWindow& bfeWindow;
         BFEDevice& bfeDevice;
+
+        boost::asio::deadline_timer mousePollTimer = boost::asio::deadline_timer(io_context_);
     };
 }

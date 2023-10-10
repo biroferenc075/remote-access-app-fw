@@ -2,8 +2,7 @@
 
 #include "../BFE-Core/BFE_gameobject.hpp"
 #include "../BFE-Core/BFE_window.hpp"
-
-#include <vector>
+#include <set>
 namespace BFE {
     class KeyboardCameraController {
     public:
@@ -21,7 +20,7 @@ namespace BFE {
             int lookDown = GLFW_KEY_DOWN;
         };
         void moveInPlaneXZ(GLFWwindow* window, float dt, BFEGameObject& gameObject);
-        void moveInPlaneXZ(std::vector<int> key, float dt, BFEGameObject& gameObject, float t);
+        void moveInPlaneXZ(std::set<int> key, float dt, BFEGameObject& gameObject, float t);
         KeyMappings keys{};
         float moveSpeed{ 3.f };
         float lookSpeed{ 1.5f };

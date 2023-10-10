@@ -22,14 +22,16 @@ decompressionModule_(everyoneReady, readyCond, mut, displayModule_, bfeDevice) {
 
 void StreamingClient::start() {
     try {
-    boost::thread t1(boost::bind(&tcp_client::readThread, &network_client_));
+    boost::thread networkRead(boost::bind(&tcp_client::readThread, &network_client_));
+    boost::thread networkWrite(boost::bind(&tcp_client::writeThread, &network_client_));
 
-    boost::thread t2(boost::bind(&DecompressionModule::run, &decompressionModule_));
+    boost::thread decomp(boost::bind(&DecompressionModule::run, &decompressionModule_));
 
-    t1.detach();
+    networkRead.detach();
+    networkWrite.detach();
+    decomp.detach();
 
-    t2.detach();
-    boost::thread r(boost::bind(&StreamingClient::waitUntilReady, this));
+    boost::thread ready(boost::bind(&StreamingClient::waitUntilReady, this));
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> guard = boost::asio::make_work_guard(io_context_);
 
     boost::thread io(boost::bind(&boost::asio::io_context::run, &io_context_));
@@ -54,4 +56,28 @@ void StreamingClient::waitUntilReady() {
     readyCond.notify_all();
     Sleep(1000);
 
+}
+
+void sc::StreamingClient::registerCallbacks(BFEWindow& window)
+{
+    using namespace boost;
+    
+    window.registerCallbacks(
+        bind(&tcp_client::procFramebufferResize, &network_client_, boost::placeholders::_1, boost::placeholders::_2),
+        bind(&tcp_client::procKeypress, &network_client_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4),
+        bind(&tcp_client::procMousePress, &network_client_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4, boost::placeholders::_5)
+    ); //TODO register network module callbacks
+
+    mousePollTimer.expires_from_now(boost::posix_time::milliseconds(MOUSE_POLL_RATE));
+    mousePollTimer.async_wait(bind(&StreamingClient::pollMouse, this));
+}
+
+void sc::StreamingClient::pollMouse() {
+    double x, y;
+    glfwGetCursorPos(bfeWindow.getGLFWwindow(), &x, &y);
+    network_client_.procMousePoll(x, y);
+   
+
+    mousePollTimer.expires_from_now(boost::posix_time::milliseconds(MOUSE_POLL_RATE));
+    mousePollTimer.async_wait(bind(&StreamingClient::pollMouse, this));
 }

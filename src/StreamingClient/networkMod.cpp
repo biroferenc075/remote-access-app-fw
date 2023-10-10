@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -17,7 +18,7 @@ const int delimSize = 4;
 
 
 
-tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) : socket_(socket), dm(dm), everyoneReady(readyFlag), readyCond(readyCond), mut(mut) {}
+tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& readyFlag, boost::condition_variable& readyCond, boost::mutex& mut) : socket_(socket), dm(dm), everyoneReady(readyFlag), readyCond(readyCond), mut(mut), sem(0) {}
     void tcp_client::readThread() {
         try {
 
@@ -54,8 +55,6 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
             size_t offs = 0;
             while (!shouldStop)
             {
-            
-        
                 Frame* fr = new Frame(imgsize);
 
                 int delim = -1;
@@ -116,16 +115,39 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
     }
     
     void tcp_client::writeThread() {
-        std::string inp;
-        do {
-            std::cin >> inp;
+        
+        while (true) {
+            sem.wait();
+            boost::asio::streambuf buf;
+            std::ostream os(&buf);
+            boost::archive::text_oarchive arch(os);
 
-            boost::asio::async_write(socket_, boost::asio::buffer(inp), 
-                boost::bind(&tcp_client::handle_write, this,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred));
-        } while (inp.at(0) != 'x' && inp.length() == 1 && !shouldStop);
-        shouldStop = true;
+            InputEvent* ev;
+            if (inputEventQueue.pop(ev)) { //TODO change into loop, but for some reason it breaks the serialization order
+                switch (ev->getTypeId()) {
+                case 0:
+                    static_cast<MousePressEvent*>(ev)->serialize(arch, 0);
+                    break;
+                case 1:
+                    static_cast<MousePollEvent*>(ev)->serialize(arch, 0);
+                    break;
+                case 2:
+                    static_cast<KeyboardEvent*>(ev)->serialize(arch, 0);
+                    break;
+                case 3:
+                    static_cast<WindowResizeEvent*>(ev)->serialize(arch, 0);
+                    break;
+              }   
+              os << DELIM_CHAR;
+            }
+
+            //std::string s((std::istreambuf_iterator<char>(&buf)), std::istreambuf_iterator<char>());
+            //std::cout << s << endl;
+
+            //boost::asio::write(socket_, boost::asio::buffer(s.data(), strlen(s.data())));
+            boost::asio::write(socket_, buf);
+            delete ev;
+        }
     }
 
     void tcp_client::handle_write(const boost::system::error_code& /*error*/,
@@ -149,6 +171,43 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
             }
         }
         return -1;
+    }
+
+    void sc::tcp_client::procFramebufferResize(int width, int height)
+    {
+        //std::cout << "BUFF RESIZE";
+        inputEventQueue.push(new WindowResizeEvent(width, height));
+        sem.post();
+    }
+
+    void sc::tcp_client::procKeypress(int key, int scancode, int action, int mods)
+    {
+        if (action != GLFW_REPEAT) {
+            //std::cout << "KEY PRESS";
+            inputEventQueue.push(new KeyboardEvent(key, scancode, action, mods));
+            sem.post();
+        }
+    }
+
+    void sc::tcp_client::procMousePoll(double xpos, double ypos)
+    {
+        static double prevX = 0, prevY = 0;
+        if (xpos != prevX || ypos != prevY) {
+            //std::cout << "MOUSE POLL";
+            inputEventQueue.push(new MousePollEvent(xpos, ypos));
+            sem.post();
+        }
+        prevX = xpos;
+        prevY = ypos;
+    }
+
+    void sc::tcp_client::procMousePress(double xpos, double ypos, int button, int action, int mods)
+    {
+        if (action != GLFW_REPEAT) {
+            //std::cout << "MOUSE PRESS";
+            inputEventQueue.push(new MousePressEvent(xpos, ypos, button, action, mods));
+            sem.post();
+        }
     }
 
 

@@ -10,17 +10,21 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/array.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 #include <stb_image.h>
-#include "StreamingServer.hpp"
+#include "networkMod.hpp"
+#include "inputEvents.hpp"
 
 #include <boost/lockfree/queue.hpp>
+using namespace BFE;
 
 using boost::asio::ip::tcp;
+using namespace BFE;
 
-tcp_connection::pointer tcp_connection::create(boost::asio::io_context& io_context, bool& shouldStop)
+tcp_connection::pointer tcp_connection::create(boost::asio::io_context& io_context, bool& shouldStop, boost::function<void()> onDisconnectCallback)
 {
-    return pointer(new tcp_connection(io_context, shouldStop));
+    return pointer(new tcp_connection(io_context, shouldStop, onDisconnectCallback));
 }
 
 tcp::socket& tcp_connection::socket()
@@ -29,7 +33,7 @@ tcp::socket& tcp_connection::socket()
 }
 
 
-void tcp_connection::start(boost::asio::io_context& io_context, boost::lockfree::queue<BFE::Frame*>& queue)
+void tcp_connection::start(boost::asio::io_context& io_context, boost::lockfree::queue<BFE::Frame*>& queue, boost::lockfree::queue<BFE::InputEvent*>& inputEventQueue)
 {
     try {
         message_ = "make_daytime_string";
@@ -45,9 +49,10 @@ void tcp_connection::start(boost::asio::io_context& io_context, boost::lockfree:
         //imageSize = imgWidth * imgHeight * 4;
         std::cout << imageSize << " imagesize \n";
 
-        boost::thread t(boost::bind(&tcp_connection::readThread, this));
+        boost::thread t(boost::bind(&tcp_connection::readThread, this, boost::ref(inputEventQueue)));
         t.detach();
         writeThread(io_context, queue);
+        
     }
     catch (std::exception e) {
         std::cout << e.what();
@@ -55,14 +60,19 @@ void tcp_connection::start(boost::asio::io_context& io_context, boost::lockfree:
 
 }
 
-void tcp_connection::readThread() {
+void tcp_connection::readThread(boost::lockfree::queue<BFE::InputEvent*>& inputEventQueue) {
+    //std::cout << "READ start" << std::endl;
     try {
+        socket_.wait_read();
         while (!shouldStop)
         {
-            boost::array<char, 128> buf;
+            //std::cout << "buf ";
+            boost::asio::streambuf buf;
+ 
             boost::system::error_code error;
 
-            size_t len = socket_.read_some(boost::asio::buffer(buf), error);
+            size_t len = boost::asio::read_until(socket_, buf, DELIM_CHAR, error);
+            //std::cout << "read " << len << " bytes";
 
             if (error == boost::asio::error::eof) {
                 shouldStop = true;
@@ -73,11 +83,28 @@ void tcp_connection::readThread() {
                 throw boost::system::system_error(error); // Some other error.
             }
 
-            message_.assign(buf.data(), len);
+           // std::cout << "arch ";
+            std::istream is(&buf);
+            boost::archive::text_iarchive arch(is);
+
+           // std::cout << "load ";
+            try {
+                InputEvent* ev = InputEvent::load(arch);
+
+                //std::cout << "push ";
+                inputEventQueue.push(ev);
+            }
+            catch (boost::archive::archive_exception e) {
+                std::cout << "ouch" << e.what();
+            }
+
+            //std::cout << "wait ";
+            socket_.wait_read();
         }
     }
     catch (std::exception e)
     {
+        //std::cout << "AAAAAAAAAAAA\n";
         std::cout << e.what();
     }
 
@@ -92,9 +119,9 @@ void tcp_connection::writeThread(boost::asio::io_context& io_context, boost::loc
             break;
         }
     }
-    boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));//boost::asio::chrono::milliseconds(250)); //boost::asio::chrono::nanoseconds(1'000'000'000 / 30));
+    boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));
 
-    std::cout << "write\n";
+    //std::cout << "write\n";
     int i = 0;
     while (!shouldStop)
     {
@@ -104,7 +131,7 @@ void tcp_connection::writeThread(boost::asio::io_context& io_context, boost::loc
             //sendMsg(pixels[i++ % frameNum]);
             sendMsg(f->data);
             sendDelim();
-            std::cout << i++ << " tick" << imageSize << " imagesize \n";
+            //std::cout << i++ << " tick" << imageSize << " imagesize \n";
             t.expires_from_now(boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));
             t.wait();
 
@@ -133,9 +160,13 @@ void tcp_connection::sendDelim() {
     }
 }
 
-tcp_connection::tcp_connection(boost::asio::io_context& io_context, bool& shouldStop)
-    : socket_(io_context), shouldStop(shouldStop)
+tcp_connection::tcp_connection(boost::asio::io_context& io_context, bool& shouldStop, boost::function<void()> onDisconnectCallback)
+    : socket_(io_context), shouldStop(shouldStop), onDisconnectCallback(onDisconnectCallback)
 {
+}
+
+tcp_connection::~tcp_connection() {
+    onDisconnectCallback();
 }
 
 void tcp_connection::handle_write(const boost::system::error_code& error,
@@ -148,18 +179,17 @@ void tcp_connection::handle_write(const boost::system::error_code& error,
 }
 
 
-tcp_server::tcp_server(boost::asio::io_context& io_context, boost::lockfree::queue<BFE::Frame*>& queue, bool& shouldStop)
+tcp_server::tcp_server(boost::asio::io_context& io_context, boost::lockfree::queue<BFE::Frame*>& frameQueue, boost::lockfree::queue<BFE::InputEvent*>& inputEventQueue, bool& shouldStop, boost::function<void()> onConnectCallback, boost::function<void()> onDisconnectCallback)
     : io_context_(io_context),
-    acceptor_(io_context, tcp::endpoint(tcp::v4(), 13)), queue(queue), shouldStop(shouldStop)
+    acceptor_(io_context, tcp::endpoint(tcp::v4(), 13)), frameQueue(frameQueue), inputEventQueue(inputEventQueue), shouldStop(shouldStop),
+    onConnectCallback(onConnectCallback), onDisconnectCallback(onDisconnectCallback)
 {
     start_accept();
 }
-void tcp_server::registerConnectCallback(boost::function<void()> onConnectCallback) {
-    this->onConnectCallback = onConnectCallback;
-}
+
 void tcp_server::start_accept()
 {
-    tcp_connection::pointer new_connection = tcp_connection::create(io_context_, shouldStop);
+    tcp_connection::pointer new_connection = tcp_connection::create(io_context_, shouldStop, onDisconnectCallback);
 
     acceptor_.async_accept(new_connection->socket(),
         boost::bind(&tcp_server::handle_accept, this, new_connection,
@@ -171,8 +201,9 @@ void tcp_server::handle_accept(tcp_connection::pointer new_connection,
 {
     if (!error)
     {
+        shouldStop = false;
         onConnectCallback();
-        new_connection->start(io_context_, queue);
+        new_connection->start(io_context_, frameQueue, inputEventQueue);
     }
 
     start_accept();

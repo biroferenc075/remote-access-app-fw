@@ -138,8 +138,7 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
             timer.expires_after(dur);
             auto handlerfunc = boost::bind(&DisplayModule::handler, this, boost::placeholders::_1, bfeRenderer);
             timer.async_wait(handlerfunc);
-        }
-            
+        }     
     }
     else {
         static bool written = false;

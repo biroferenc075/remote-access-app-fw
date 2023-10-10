@@ -7,6 +7,7 @@
 #include <boost/array.hpp>
 
 #include "streamingClient.hpp"
+#include "inputevents.hpp"
 
 using boost::asio::ip::tcp;
 using namespace sc;
@@ -25,29 +26,37 @@ void run(string const& host, boost::asio::io_context& io_context) {
 
     StreamingClient streaming_client_(io_context, move(socket), win, dev);
 
+    streaming_client_.registerCallbacks(win);
+
     streaming_client_.start();
 }
 
 int main(int argc, char* argv[])
 {
-    try
-    {
-        if (argc != 2)
+    int tries = 0;
+    while (tries++ < 5) {
+        try
         {
-            //std::cerr << "Usage: streamingclient <host>" << std::endl;
-            //return 1;
+            if (argc != 2)
+            {
+                //std::cerr << "Usage: streamingclient <host>" << std::endl;
+                //return 1;
 
-            boost::asio::io_context io_context;
-            run("localhost", io_context);
+                boost::asio::io_context io_context;
+                run("localhost", io_context);
+                break;
+            }
+            else {
+                boost::asio::io_context io_context;
+                run(string(argv[1]), io_context);
+                break;
+            }
         }
-        else {
-            boost::asio::io_context io_context;
-            run(string(argv[1]), io_context);
+        catch (std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+            Sleep(2000);
         }
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
     }
 }
 
