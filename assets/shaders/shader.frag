@@ -12,6 +12,7 @@ layout(push_constant) uniform Push {
 layout (location = 0) out vec4 outColor;
 layout(binding = 1) uniform sampler2D texSampler;
 void main() {
- outColor = texture(texSampler, fragTexCoord*vec2(1.0,-1.0));
+ float gamma = 2.2;
+ outColor = pow(texture(texSampler, fragTexCoord*vec2(1.0,-1.0)), vec4(1.0/gamma));
 }
 //outColor = vec4(1.0, 1.0, 0.0, 1.0);//vec4(fragTexCoord, 0.0, 1.0);

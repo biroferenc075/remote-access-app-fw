@@ -26,8 +26,8 @@ void Example::MyApplication::onConn() {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
             VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = gameObjects[1].texture->textureImageView;
-            imageInfo.sampler = gameObjects[1].texture->textureSampler;
+            imageInfo.imageView = gameObjects[0].texture->textureImageView;
+            imageInfo.sampler = gameObjects[0].texture->textureSampler;
 
             BFEDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
@@ -138,7 +138,7 @@ void Example::MyApplication::loadGameObjects() {
     auto plane = BFEGameObject::createGameObject();
     plane.model = planeModel;
     plane.texture = planeTexture;
-    plane.transform.translation = { 0.0f, 0.25f, 2.5f };
+    plane.transform.translation = { 0.0f, 0.35f, 2.5f };
     plane.transform.scale = { 2.f, 2.f, 2.f };
     plane.transform.rotation = { 1.57f, 0.0f, 0.0f };
 
