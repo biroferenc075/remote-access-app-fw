@@ -37,7 +37,6 @@ void DisplayModule::handler(const boost::system::error_code& error, BFERenderer*
 
         VkImage currImg = bfeRenderer->getCurrentImage();
         if (imageQueue.pop(img)) {
-            
             auto buffer = bfeRenderer->beginFrame();
 
             VkImageCopy imgCopy{};
@@ -172,8 +171,7 @@ void DisplayModule::run() {
                 timer.cancel();
                 break;
             }
-            Sleep(1);
-
+            Sleep(5);
         }
         BFEImage* img;
 

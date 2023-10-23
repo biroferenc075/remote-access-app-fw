@@ -1,6 +1,8 @@
 #pragma once
 #include "consts.hpp"
 #include <memory>
+
+
 namespace BFE {
     struct Frame {
         size_t size;
@@ -14,7 +16,8 @@ namespace BFE {
         Frame(size_t size, unsigned char* data) : size(size), data(data) {}
 
         ~Frame() {
-            free(data);
+           free(data);
         }
+
     };
 }

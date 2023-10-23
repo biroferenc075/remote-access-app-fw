@@ -2,8 +2,9 @@
 #include "consts.hpp"
 #include <array>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include "stb_image_write.h"
+#include "stb_image.h"
 
 
 namespace BFE {
@@ -298,7 +299,9 @@ namespace BFE {
 			imagedata += subResourceLayout.rowPitch;
 		}
 
-		frameQueue.push(fr);
+		if (!frameQueue.push(fr)) {
+			delete fr;
+		}
 
 		vkUnmapMemory(bfeDevice.device(), dstImageMemory);
 		vkFreeMemory(bfeDevice.device(), dstImageMemory, nullptr);

@@ -2,8 +2,6 @@
 #include "BFE_buffer.hpp"
 
 #include <stdexcept>
-
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 //TODO separate sampler and image
 namespace BFE {

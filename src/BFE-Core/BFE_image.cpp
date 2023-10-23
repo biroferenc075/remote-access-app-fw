@@ -2,6 +2,9 @@
 #include "BFE_buffer.hpp"
 
 #include <stdexcept>
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#endif
 #include <stb_image.h>
 #include <iostream>
 namespace BFE {

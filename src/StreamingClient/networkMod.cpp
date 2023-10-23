@@ -12,7 +12,8 @@ using boost::asio::ip::tcp;
 
 using namespace sc;
 
-const size_t imgsize = WIDTH * HEIGHT * 4;
+size_t imgsize = 0;
+const size_t maximgsize = WIDTH * HEIGHT * 4;
 const unsigned char delim[4] = { 1u,2u,3u,4u };
 const int delimSize = 4;
 
@@ -34,8 +35,13 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
             boost::array<unsigned char, 1024> arr;
             boost::asio::mutable_buffer buf = boost::asio::buffer(arr);
 
-            size_t vecSize = (imgsize + delimSize) * 2;
-            size_t maxOffs = imgsize + delimSize;
+            size_t vecSize = (maximgsize + delimSize) * 2;
+            
+            size_t sizeOffs = sizeof(size_t) + delimSize;
+
+            std::vector<unsigned char> sizearr(vecSize, 0);
+            boost::asio::mutable_buffer sizebuf = boost::asio::buffer(sizearr);
+
             std::vector<unsigned char> imgarr(vecSize, 0);
             boost::asio::mutable_buffer imgbuf = boost::asio::buffer(imgarr);
 
@@ -44,9 +50,7 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
 
             size_t len = 0;
 
-        
-
-            boost::asio::socket_base::receive_buffer_size option(2*(imgsize+delimSize));
+            boost::asio::socket_base::receive_buffer_size option(vecSize);
             socket_.set_option(option);
 
             const char* msg = "r";
@@ -55,11 +59,39 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
             size_t offs = 0;
             while (!shouldStop)
             {
+                int delim = -1;
+                // read enough data for size + delim
+                while (offs < sizeOffs) {
+                    boost::system::error_code error;
+                    len = socket_.read_some(buf, error);
+
+                    if (error == boost::asio::error::eof) {
+                        std::cout << "found eof";
+                        return; // Connection closed cleanly by peer.
+                    }
+                    else if (error) {
+                        std::cout << "network error: " << error.message() << "\n";
+                        shouldStop = true;
+                        return;
+                        //throw boost::system::system_error(error); // Some other error.
+                    }
+                    memcpy((unsigned char*)sizebuf.data() + offs, buf.data(), len);
+                    offs += len;
+                }
+
+                // try to parse the data for the image size
+                size_t* size_ptr = (size_t*)sizebuf.data();
+                imgsize = *size_ptr;
                 Frame* fr = new Frame(imgsize);
 
-                int delim = -1;
+                // copy leftover from previous buffer
+                memcpy((unsigned char*)imgbuf.data(), (unsigned char*)sizebuf.data() + sizeOffs, offs - sizeOffs);
+                offs = offs - sizeOffs;
+
+                size_t imgOffs = imgsize + delimSize;
+
                 // read enough data for delim + img
-                while (offs < maxOffs) {
+                while (offs < imgOffs) {
                     boost::system::error_code error;
                     len = socket_.read_some(buf, error);
             
@@ -76,6 +108,7 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
                         return;
                         //throw boost::system::system_error(error); // Some other error.
                     }
+                    //std::cout << "read " << len << std::endl;
                     memcpy((unsigned char*)imgbuf.data() + offs, buf.data(), len);
                     offs += len;
                 }
@@ -84,13 +117,14 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
             
                 // if both delimiters are found, and there is enough data between them, we can submit the frame
                 if (delim != -1 && delim == imgsize) {
-                    memcpy(fr->data, (const unsigned char*)imgbuf.data()+delimSize, imgsize);
+                    memcpy(fr->data, (const unsigned char*)imgbuf.data(), imgsize);
+                    
                     dm.submitToQueue(fr);
 
-                    memcpy(cpybuff.data(), (const unsigned char*)imgbuf.data() + delim + delimSize, offs - maxOffs);
+                    memcpy(cpybuff.data(), (const unsigned char*)imgbuf.data() + delim + delimSize, offs - imgOffs);
                     fill(imgarr.begin(), imgarr.end(), 0);
-                    memcpy(imgbuf.data(), (const unsigned char*)cpybuff.data(), offs-maxOffs);
-                    offs = 0;
+                    memcpy(imgbuf.data(), (const unsigned char*)cpybuff.data(), offs - imgOffs);
+                    offs = offs - imgOffs;
                 }
                 else {
                     // if we have found the delimiter but there is data lost before it, the data after it must be for the next frame, so we reuse it
@@ -157,11 +191,12 @@ tcp_client::tcp_client(tcp::socket& socket, DecompressionModule& dm, bool& ready
 
     int tcp_client::findDelim(boost::asio::mutable_buffer& buf, int startIdx) {
         auto d = (const unsigned char*)buf.data();
-        for (int i = startIdx; i < buf.size(); i += delimSize) {
+        for (int i = startIdx; i < buf.size(); i += 1) {
 
             bool found = true;
             for (int j = 0; j < delimSize; j++) {
                 if (delim[j] != d[j+i]) {
+                   // std::cout << std::hex << (int)d[j + i];
                     found = false;
                     break;
                 }

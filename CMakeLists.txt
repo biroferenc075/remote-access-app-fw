@@ -20,6 +20,7 @@ set(Vulkan_INCLUDE_DIR "D:/SDK/VulkanSDK/1.3.236.0/Include")
 set(Boost_INCLUDE_DIR "D:/SDK/boost/boost_1_81_0")
 set(Boost_LIBRARY "D:/SDK/boost/boost_1_81_0/stage/lib")
 set(LIBS "${PROJECT_SOURCE_DIR}/libs")
+set(LZ4_LIBRARY "${PROJECT_SOURCE_DIR}/libs/lz4")
 
 # find_package(glm REQUIRED)
 find_package(GLFW3 3.3 REQUIRED)
@@ -33,12 +34,13 @@ list(APPEND LIBRARIES
     ${Vulkan_LIBRARIES}
     ${Boost_LIBRARY}
     ${GLFW3_LIB}
+    ${LZ4_LIBRARY}
     )
 
 
 include_directories(${INCLUDES})
 link_directories(${LIBRARIES})
-link_libraries(glfw3 glfw3_mt)
+link_libraries(glfw3 glfw3_mt liblz4)
 
 
 # Include sub-projects.

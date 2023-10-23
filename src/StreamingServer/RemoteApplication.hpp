@@ -182,7 +182,8 @@ public:
 			
 			keysPressed.clear();
 			keysReleased.clear();
-			Sleep(1000.0f / FRAMERATE - frameTime);
+
+			Sleep((1000.0f / FRAMERATE) - frameTime);
 		}
 
 

@@ -2,6 +2,9 @@
 
 #include <ctime>
 #include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include "consts.hpp"
 #include <boost/bind/bind.hpp>
@@ -11,16 +14,35 @@
 #include <boost/thread.hpp>
 #include <boost/array.hpp>
 #include <boost/archive/text_iarchive.hpp>
-
-#include <stb_image.h>
 #include "networkMod.hpp"
 #include "inputEvents.hpp"
 
 #include <boost/lockfree/queue.hpp>
-using namespace BFE;
+
+#include "lz4/lz4frame.h"
 
 using boost::asio::ip::tcp;
 using namespace BFE;
+
+
+static void EncodeLZ4(Frame* f) {
+    size_t compressedBufferSize = LZ4F_compressFrameBound(f->size, nullptr);
+    unsigned char* compressedBuffer = (unsigned char*)malloc(compressedBufferSize);
+
+    // Compress data
+    int compressedSize = LZ4F_compressFrame(
+        (char*)compressedBuffer,
+        compressedBufferSize,
+        (char*)f->data,
+        f->size,
+        nullptr
+    );
+
+    free(f->data);
+    f->data = compressedBuffer;
+    f->size = compressedBufferSize;
+    
+}
 
 tcp_connection::pointer tcp_connection::create(boost::asio::io_context& io_context, bool& shouldStop, boost::function<void()> onDisconnectCallback)
 {
@@ -47,7 +69,6 @@ void tcp_connection::start(boost::asio::io_context& io_context, boost::lockfree:
             }
         }*/
         //imageSize = imgWidth * imgHeight * 4;
-        std::cout << imageSize << " imagesize \n";
 
         boost::thread t(boost::bind(&tcp_connection::readThread, this, boost::ref(inputEventQueue)));
         t.detach();
@@ -104,7 +125,6 @@ void tcp_connection::readThread(boost::lockfree::queue<BFE::InputEvent*>& inputE
     }
     catch (std::exception e)
     {
-        //std::cout << "AAAAAAAAAAAA\n";
         std::cout << e.what();
     }
 
@@ -119,7 +139,8 @@ void tcp_connection::writeThread(boost::asio::io_context& io_context, boost::loc
             break;
         }
     }
-    boost::asio::steady_timer t(io_context, boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));
+    std::chrono::steady_clock::duration dur = std::chrono::steady_clock::duration(1'000'000'000 / FRAMERATE);
+    boost::asio::steady_timer t(io_context, dur);
 
     //std::cout << "write\n";
     int i = 0;
@@ -127,28 +148,41 @@ void tcp_connection::writeThread(boost::asio::io_context& io_context, boost::loc
     {
         BFE::Frame* f;
         if (queue.pop(f)) {
-            imageSize = f->size;
-            //sendMsg(pixels[i++ % frameNum]);
-            sendMsg(f->data);
-            sendDelim();
-            //std::cout << i++ << " tick" << imageSize << " imagesize \n";
-            t.expires_from_now(boost::asio::chrono::nanoseconds(1'000'000'000 / FRAMERATE));
-            t.wait();
-
+            EncodeLZ4(f);//EncodePNG(f);
+          
+            sendFrame(f->data, &f->size);
+            
             delete f;
+            t.expires_from_now(dur);
+            t.wait();
         }
     }
 }
 
-void tcp_connection::sendMsg(void* src) {
+void tcp_connection::sendFrame(void* frame_data, size_t* size_ptr) {
+
+    // send size first
     int sent = 0;
     int total = 0;
-    //boost::asio::async_write(socket_, boost::asio::buffer(src, imageSize), boost::bind(&tcp_connection::handle_write, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-    while (total < imageSize) {
-        sent = socket_.send(boost::asio::buffer((unsigned char*)src + total, imageSize - total));
+
+    while (total < sizeof(size_t)) {
+        sent = socket_.send(boost::asio::buffer((unsigned char*)size_ptr + total, sizeof(size_t) - total));
+        total += sent;
+    }
+
+    // then a delim
+    sendDelim();
+
+    // then send the data itself
+    sent = 0;
+    total = 0;
+    while (total < *size_ptr) {
+        sent = socket_.send(boost::asio::buffer((unsigned char*)frame_data + total, *size_ptr - total));
         total += sent;
         //std::cout << imageSize - total << std::endl;
     }
+    // finally another delim
+    sendDelim();
 }
 
 void tcp_connection::sendDelim() {

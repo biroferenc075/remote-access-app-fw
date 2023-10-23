@@ -11,7 +11,7 @@
 #include <boost/thread.hpp>
 #include <boost/array.hpp>
 
-#include <stb_image.h>
+
 
 #include "consts.hpp"
 #include "frame.hpp"
@@ -41,7 +41,7 @@ public:
     void readThread(boost::lockfree::queue<BFE::InputEvent*>& inputEventQueue);
     void writeThread(boost::asio::io_context& io_context, boost::lockfree::queue<BFE::Frame*>& queue);
 
-    void sendMsg(void* src);
+    void sendFrame(void* frame_data, size_t* size_ptr);
 
     void sendDelim();
     ~tcp_connection();
