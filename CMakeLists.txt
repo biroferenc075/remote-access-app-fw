@@ -22,10 +22,10 @@ set(Boost_LIBRARY "D:/SDK/boost/boost_1_81_0/stage/lib")
 set(LIBS "${PROJECT_SOURCE_DIR}/libs")
 set(LZ4_LIBRARY "${PROJECT_SOURCE_DIR}/libs/lz4")
 
+ find_package(Vulkan REQUIRED)
 # find_package(glm REQUIRED)
-find_package(GLFW3 3.3 REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(Boost REQUIRED)
+# find_package(GLFW3 3.3 REQUIRED)
+# find_package(Boost REQUIRED)
 
 list(APPEND INCLUDES
     ${glm_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${LIBS})
