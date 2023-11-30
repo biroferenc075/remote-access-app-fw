@@ -21,6 +21,8 @@ set(Boost_INCLUDE_DIR "D:/SDK/boost/boost_1_81_0")
 set(Boost_LIBRARY "D:/SDK/boost/boost_1_81_0/stage/lib")
 set(LIBS "${PROJECT_SOURCE_DIR}/libs")
 set(LZ4_LIBRARY "${PROJECT_SOURCE_DIR}/libs/lz4")
+set(OPENCV_INCLUDE_DIR "D:/SDK/openCV/build/include/")
+set(OPENCV_LIB "D:/SDK/openCV/build/bin")
 
  find_package(Vulkan REQUIRED)
 # find_package(glm REQUIRED)
@@ -28,13 +30,14 @@ set(LZ4_LIBRARY "${PROJECT_SOURCE_DIR}/libs/lz4")
 # find_package(Boost REQUIRED)
 
 list(APPEND INCLUDES
-    ${glm_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${LIBS})
+    ${glm_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${LIBS} ${OPENCV_INCLUDE_DIR})
 
 list(APPEND LIBRARIES
     ${Vulkan_LIBRARIES}
     ${Boost_LIBRARY}
     ${GLFW3_LIB}
     ${LZ4_LIBRARY}
+    ${OPENCV_LIB}
     )
 
 
@@ -44,8 +47,8 @@ link_libraries(glfw3 glfw3_mt liblz4)
 
 
 # Include sub-projects.
-add_subdirectory ("src/BFE-Core")
-add_subdirectory ("src/BFE-Headless")
-add_subdirectory ("src/StreamingServer")
-add_subdirectory ("src/StreamingClient")
+add_subdirectory ("src/RAC-Core")
+add_subdirectory ("src/RAC-Headless")
+add_subdirectory ("src/RemoteServer")
+add_subdirectory ("src/RemoteClient")
 
